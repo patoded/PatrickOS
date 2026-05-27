@@ -15,6 +15,7 @@ iso/auto/build
 
 # Manifests y archivos sueltos generados por 'lb build' en iso/
 iso/binary.packages
+iso/binary.contents
 iso/source.packages
 iso/chroot.packages.live
 iso/chroot.packages.install

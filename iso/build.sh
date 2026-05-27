@@ -44,6 +44,23 @@ fi
 chmod +x "$script_dir/auto/config" 2>/dev/null || true
 chmod +x "$script_dir/config/hooks/normal/"*.hook.chroot 2>/dev/null || true
 
+# 0d) Pre-flight: isohybrid disponible. lb_binary_iso lo invoca DENTRO del
+# chroot (vía 'Chroot chroot "sh binary.sh"'), por lo que el paquete crítico
+# es 'syslinux-utils' en config/package-lists/patrick-os.list.chroot. Aún así,
+# validamos también en el host: ayuda a detectar entornos rotos temprano y
+# algunos builds sin chroot lo necesitan en el host.
+if command -v isohybrid >/dev/null 2>&1; then
+    echo "Pre-flight: isohybrid en host: $(command -v isohybrid)"
+    if dpkg -s syslinux-utils >/dev/null 2>&1; then
+        echo "            syslinux-utils instalado en host (versión: $(dpkg-query -W -f='\${Version}' syslinux-utils))"
+    fi
+else
+    echo "Aviso: isohybrid no está en el PATH del host."
+    echo "       El chroot lo recibirá vía 'syslinux-utils' (package-lists/patrick-os.list.chroot)."
+    echo "       Para tenerlo también en el host:  sudo apt install syslinux-utils"
+fi
+echo
+
 # 1) Poblar includes.chroot con Watson + scripts + docs.
 echo "[1/6] Copiando Watson, scripts y docs a includes.chroot..."
 

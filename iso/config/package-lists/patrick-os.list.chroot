@@ -6,3 +6,8 @@ curl
 ffmpeg
 htop
 tree
+# Aporta /usr/bin/isohybrid dentro del chroot. lb_binary_iso lo necesita
+# para producir iso-hybrid (línea 204 invoca 'isohybrid' vía Chroot). En
+# Ubuntu noble el binario migró del paquete 'syslinux' a 'syslinux-utils';
+# la heurística Check_package de live-build 3.x lo busca en el lugar viejo.
+syslinux-utils
