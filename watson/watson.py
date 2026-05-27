@@ -9,6 +9,8 @@ def ejecutar_seguro(cmd, descripcion):
         subprocess.run(cmd, check=True)
     except FileNotFoundError:
         print(f"  Error: '{cmd[0]}' no está instalado o no se encuentra en el PATH.")
+    except PermissionError:
+        print(f"  Error: no tengo permisos para ejecutar '{cmd[0]}'. Revisa chmod +x o permisos del archivo.")
     except subprocess.CalledProcessError as e:
         print(f"  Error: '{cmd[0]}' terminó con código {e.returncode}.")
 
