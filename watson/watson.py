@@ -1,4 +1,18 @@
 #!/usr/bin/env python3
+import os
+import subprocess
+
+
+def ejecutar_seguro(cmd, descripcion):
+    # Ejecuta un comando externo y reporta errores sin tumbar a Watson.
+    print(f"\n[{descripcion}] $ {' '.join(cmd)}")
+    try:
+        subprocess.run(cmd, check=True)
+    except FileNotFoundError:
+        print(f"  Error: '{cmd[0]}' no está instalado o no se encuentra en el PATH.")
+    except subprocess.CalledProcessError as e:
+        print(f"  Error: '{cmd[0]}' terminó con código {e.returncode}.")
+
 
 def mostrar_menu():
     print("\nWatson - Agente local PatrickOS")
@@ -29,7 +43,9 @@ def ejecutar_comando(comando):
 
     elif comando == "modo desarrollo":
         print("Activando modo desarrollo...")
-        print("Prepararía VS Code, Git, terminal y proyecto PatrickOS.")
+        print(f"Ruta actual: {os.getcwd()}")
+        ejecutar_seguro(["git", "status"], "git status")
+        ejecutar_seguro(["tree", "-L", "2"], "tree -L 2")
 
     elif comando == "modo ia":
         print("Activando modo IA...")
