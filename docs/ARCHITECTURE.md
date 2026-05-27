@@ -90,3 +90,6 @@ Reglas iniciales:
 - Verificar GPU.
 - Cargar modelo local.
 - Monitorear recursos.
+- Ollama instalado en WSL2.
+- NVIDIA detectada por Ollama.
+- API local disponible en 127.0.0.1:11434.
