@@ -90,19 +90,23 @@ rm -rf config/auto
 # 'noauto' suprime la auto-ejecución de auto/config (que igual hace lo mismo,
 # pero aquí blindamos el path).
 echo "[4/6] lb config (parámetros explícitos)..."
-# Nota sobre --bootloader: live-build 3.x usa --bootloader (singular) con
-# valores grub|syslinux|yaboot. Forzamos 'grub' porque el stage syslinux
-# intenta instalar 'syslinux-themes-ubuntu-oneiric' y 'gfxboot-theme-ubuntu',
-# paquetes que ya no existen en Ubuntu noble. Con LB_BOOTLOADER=grub, el
-# script /usr/lib/live/build/lb_binary_syslinux hace 'exit 0' inmediatamente
-# (línea 27) y nunca toca esos paquetes muertos.
+# --bootloader en live-build 3.x acepta grub|grub2|syslinux|yaboot:
+#   - syslinux: dispara lb_binary_syslinux → instala
+#     syslinux-themes-ubuntu-oneiric (muerto en noble) y gfxboot-theme-ubuntu
+#     (sin candidato en noble).
+#   - grub: dispara lb_binary_grub → intenta instalar grub-legacy
+#     (paquete muerto en noble).
+#   - grub2: dispara lb_binary_grub2 → instala grub-pc (GRUB 2 para BIOS,
+#     vigente en noble). Es el único valor compatible.
+# Verificación en fuente: /usr/lib/live/build/lb_binary_grub2 línea 27 hace
+# 'exit 0' si LB_BOOTLOADER != grub2; línea 54 referencia grub-pc.
 lb config noauto \
     --mode ubuntu \
     --distribution noble \
     --archive-areas "main universe multiverse restricted" \
     --linux-flavours generic \
     --binary-images iso-hybrid \
-    --bootloader grub \
+    --bootloader grub2 \
     --debian-installer false \
     --apt-indices false \
     --memtest none \
@@ -138,14 +142,16 @@ if grep -rln 'precise' config/ 2>/dev/null; then
     exit 1
 fi
 
-if grep -qE '^LB_BOOTLOADER=".*syslinux' config/binary 2>/dev/null; then
-    echo "ERROR: LB_BOOTLOADER contiene syslinux. Esperado: grub."
+if ! grep -q '^LB_BOOTLOADER="grub2"$' config/binary 2>/dev/null; then
+    echo "ERROR: LB_BOOTLOADER no es 'grub2'. Esperado: grub2 (GRUB 2 vía grub-pc)."
+    echo "       'grub' = grub-legacy (paquete muerto en noble)."
+    echo "       'syslinux' = pide gfxboot-theme-ubuntu (paquete muerto)."
     grep '^LB_BOOTLOADER=' config/binary
     echo "Abortando antes de lb build."
     exit 1
 fi
 
-echo "    OK: noble + bootloader grub confirmados, sin precise ni syslinux."
+echo "    OK: noble + bootloader grub2 confirmados (sin precise/syslinux/grub-legacy)."
 
 # 6) lb build: construye la ISO.
 echo "[6/6] lb build (20-40 minutos, requiere red)..."
