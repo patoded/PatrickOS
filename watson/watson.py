@@ -21,6 +21,7 @@ def mostrar_menu():
     print("  modo video")
     print("  modo desarrollo")
     print("  modo ia")
+    print("  preguntar ia")
     print("  estado")
     print("  salir")
 
@@ -47,6 +48,13 @@ def ejecutar_comando(comando):
     elif comando == "modo ia":
         print("Activando modo IA...")
         ejecutar_seguro(["./scripts/mode-ai.sh"], "mode-ai.sh")
+
+    elif comando == "preguntar ia":
+        pregunta = input("Tu pregunta: ").strip()
+        if not pregunta:
+            print("No se recibió pregunta. Cancelando.")
+        else:
+            ejecutar_seguro(["./scripts/ask-local.sh", pregunta], "ask-local.sh")
 
     elif comando == "estado":
         print("Watson activo. Sistema base en modo desarrollo.")
