@@ -90,12 +90,19 @@ rm -rf config/auto
 # 'noauto' suprime la auto-ejecución de auto/config (que igual hace lo mismo,
 # pero aquí blindamos el path).
 echo "[4/6] lb config (parámetros explícitos)..."
+# Nota sobre --bootloader: live-build 3.x usa --bootloader (singular) con
+# valores grub|syslinux|yaboot. Forzamos 'grub' porque el stage syslinux
+# intenta instalar 'syslinux-themes-ubuntu-oneiric' y 'gfxboot-theme-ubuntu',
+# paquetes que ya no existen en Ubuntu noble. Con LB_BOOTLOADER=grub, el
+# script /usr/lib/live/build/lb_binary_syslinux hace 'exit 0' inmediatamente
+# (línea 27) y nunca toca esos paquetes muertos.
 lb config noauto \
     --mode ubuntu \
     --distribution noble \
     --archive-areas "main universe multiverse restricted" \
     --linux-flavours generic \
     --binary-images iso-hybrid \
+    --bootloader grub \
     --debian-installer false \
     --apt-indices false \
     --memtest none \
@@ -107,11 +114,13 @@ lb config noauto \
     --mirror-chroot http://archive.ubuntu.com/ubuntu/ \
     --mirror-binary http://archive.ubuntu.com/ubuntu/
 
-# 5) Validación: bootstrap debe declarar noble y NUNCA precise.
-echo "[5/6] Validando config/bootstrap..."
+# 5) Validación: bootstrap debe declarar noble, NUNCA precise, y NUNCA
+#    bootloader syslinux.
+echo "[5/6] Validando config..."
 echo
-echo "--- config/bootstrap (líneas clave) ---"
-grep -E '^LB_(MODE|DISTRIBUTION|PARENT_DISTRIBUTION|ARCHIVE_AREAS|MIRROR_)' config/bootstrap config/common 2>/dev/null || true
+echo "--- config (líneas clave) ---"
+grep -E '^LB_(MODE|DISTRIBUTION|PARENT_DISTRIBUTION|ARCHIVE_AREAS|MIRROR_|BOOTLOADER|BINARY_IMAGES)=' \
+    config/binary config/bootstrap config/common 2>/dev/null || true
 echo "---"
 echo
 
@@ -129,7 +138,14 @@ if grep -rln 'precise' config/ 2>/dev/null; then
     exit 1
 fi
 
-echo "    OK: distribución noble confirmada, sin rastro de precise."
+if grep -qE '^LB_BOOTLOADER=".*syslinux' config/binary 2>/dev/null; then
+    echo "ERROR: LB_BOOTLOADER contiene syslinux. Esperado: grub."
+    grep '^LB_BOOTLOADER=' config/binary
+    echo "Abortando antes de lb build."
+    exit 1
+fi
+
+echo "    OK: noble + bootloader grub confirmados, sin precise ni syslinux."
 
 # 6) lb build: construye la ISO.
 echo "[6/6] lb build (20-40 minutos, requiere red)..."

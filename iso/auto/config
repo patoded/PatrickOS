@@ -14,6 +14,7 @@ lb config noauto \
     --archive-areas "main universe multiverse restricted" \
     --linux-flavours generic \
     --binary-images iso-hybrid \
+    --bootloader grub \
     --debian-installer false \
     --apt-indices false \
     --memtest none \

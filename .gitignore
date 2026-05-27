@@ -13,6 +13,13 @@ iso/*.log
 iso/auto/clean
 iso/auto/build
 
+# Manifests y archivos sueltos generados por 'lb build' en iso/
+iso/binary.packages
+iso/source.packages
+iso/chroot.packages.live
+iso/chroot.packages.install
+iso/chroot.headers
+
 # Archivos generados por 'lb config' dentro de iso/config/
 iso/config/binary
 iso/config/bootstrap
