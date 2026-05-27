@@ -2,3 +2,18 @@ __pycache__/
 *.pyc
 .claude/
 
+# live-build: artefactos generados durante la build (no versionar)
+iso/chroot/
+iso/binary/
+iso/.build/
+iso/cache/
+iso/local/
+iso/*.iso
+iso/*.log
+iso/auto/clean
+iso/auto/build
+
+# Material copiado dinámicamente por iso/build.sh desde watson/, scripts/, docs/
+iso/config/includes.chroot/usr/local/bin/watson
+iso/config/includes.chroot/usr/local/share/patrick-os/
+

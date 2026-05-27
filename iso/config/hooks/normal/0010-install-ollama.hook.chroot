@@ -1,0 +1,21 @@
+#!/bin/sh
+# Hook chroot: descarga e instala el binario de Ollama dentro de la ISO.
+# No instala systemd service (chroot no lo soporta bien); solo el binario.
+# Sin modelos pre-descargados: el usuario hace 'ollama pull <modelo>' post-boot.
+
+set -e
+
+echo "Hook: descargando binario de Ollama..."
+curl -fsSL -o /tmp/ollama.tgz \
+    https://ollama.com/download/ollama-linux-amd64.tgz
+
+echo "Hook: extrayendo a /usr/local/..."
+tar -xzf /tmp/ollama.tgz -C /usr/local/
+rm -f /tmp/ollama.tgz
+
+if [ -x /usr/local/bin/ollama ]; then
+    echo "Hook: Ollama instalado en /usr/local/bin/ollama"
+else
+    echo "Hook: ERROR - /usr/local/bin/ollama no es ejecutable"
+    exit 1
+fi
