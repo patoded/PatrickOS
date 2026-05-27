@@ -46,7 +46,7 @@ def ejecutar_comando(comando):
 
     elif comando == "modo ia":
         print("Activando modo IA...")
-        print("Prepararía Ollama, GPU, modelos locales y monitoreo.")
+        ejecutar_seguro(["./scripts/mode-ai.sh"], "mode-ai.sh")
 
     elif comando == "estado":
         print("Watson activo. Sistema base en modo desarrollo.")
