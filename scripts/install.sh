@@ -12,6 +12,7 @@ set -e
 BIN_DIR="/usr/local/bin"
 SHARE_DIR="/usr/local/share/patrick-os"
 SCRIPTS_DEST="$SHARE_DIR/scripts"
+DOCS_DEST="$SHARE_DIR/docs"
 
 if [ "$(id -u)" -ne 0 ]; then
     echo "Error: este script necesita privilegios de root."
@@ -31,6 +32,7 @@ fi
 echo "Instalando Watson desde:  $repo_dir"
 echo "Destino binario:          $BIN_DIR/watson"
 echo "Destino scripts:          $SCRIPTS_DEST"
+echo "Destino docs:             $DOCS_DEST"
 echo
 
 # 1) Copiar watson.py a /usr/local/bin/watson con permisos ejecutables.
@@ -40,7 +42,12 @@ install -m 0755 "$repo_dir/watson/watson.py" "$BIN_DIR/watson"
 mkdir -p "$SCRIPTS_DEST"
 install -m 0755 "$repo_dir/scripts/"*.sh "$SCRIPTS_DEST/"
 
-# 3) Ajustar el SCRIPTS_DIR por defecto en la copia instalada.
+# 3) Copiar los docs de referencia que usa ask-local.sh como contexto.
+mkdir -p "$DOCS_DEST"
+install -m 0644 "$repo_dir/docs/README.md" "$DOCS_DEST/"
+install -m 0644 "$repo_dir/docs/ARCHITECTURE.md" "$DOCS_DEST/"
+
+# 4) Ajustar el SCRIPTS_DIR por defecto en la copia instalada.
 # El watson original busca '../scripts' relativo a __file__; tras instalar a
 # /usr/local/bin/, ese cálculo apunta a /usr/local/scripts (incorrecto).
 # Sustituimos la línea para que apunte al destino real. La variable de entorno

@@ -19,22 +19,41 @@ fi
 # Juntamos todos los argumentos como una sola pregunta.
 pregunta="$*"
 
-# 3) Resolver rutas relativas al script (funciona desde cualquier directorio).
+# 3) Resolver la carpeta de docs. Buscamos en este orden:
+#      a. $PATRICK_OS_DOCS (override explícito).
+#      b. ./docs desde el cwd actual (corriendo desde el repo).
+#      c. ../docs relativo a este script (script invocado por path absoluto).
+#      d. /usr/local/share/patrick-os/docs (instalación al sistema).
+#    Si ninguna existe, seguimos pero sin contexto.
 script_dir="$(cd "$(dirname "$0")" && pwd)"
-proyecto_dir="$(dirname "$script_dir")"
+
+if [ -n "$PATRICK_OS_DOCS" ] && [ -d "$PATRICK_OS_DOCS" ]; then
+    PROJECT_DOCS_DIR="$PATRICK_OS_DOCS"
+elif [ -d "./docs" ]; then
+    PROJECT_DOCS_DIR="$(cd ./docs && pwd)"
+elif [ -d "$script_dir/../docs" ]; then
+    PROJECT_DOCS_DIR="$(cd "$script_dir/../docs" && pwd)"
+elif [ -d "/usr/local/share/patrick-os/docs" ]; then
+    PROJECT_DOCS_DIR="/usr/local/share/patrick-os/docs"
+else
+    PROJECT_DOCS_DIR=""
+fi
 
 # 4) Construir el contexto leyendo los documentos que existan.
 contexto=""
-for doc in "$proyecto_dir/docs/README.md" "$proyecto_dir/docs/ARCHITECTURE.md"; do
-    if [ -f "$doc" ]; then
-        contexto+=$'\n--- '"$(basename "$doc")"$' ---\n'
-        contexto+="$(cat "$doc")"
-        contexto+=$'\n'
-    fi
-done
+if [ -n "$PROJECT_DOCS_DIR" ]; then
+    echo "Contexto desde: $PROJECT_DOCS_DIR"
+    for doc in "$PROJECT_DOCS_DIR/README.md" "$PROJECT_DOCS_DIR/ARCHITECTURE.md"; do
+        if [ -f "$doc" ]; then
+            contexto+=$'\n--- '"$(basename "$doc")"$' ---\n'
+            contexto+="$(cat "$doc")"
+            contexto+=$'\n'
+        fi
+    done
+fi
 
 if [ -z "$contexto" ]; then
-    echo "Aviso: no se encontró docs/README.md ni docs/ARCHITECTURE.md."
+    echo "Aviso: no se encontró README.md ni ARCHITECTURE.md en una ubicación conocida."
     echo "       La pregunta se enviará sin contexto del proyecto."
 fi
 
