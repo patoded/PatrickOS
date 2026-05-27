@@ -53,10 +53,18 @@ if command -v isohybrid >/dev/null 2>&1; then
 else
     echo "Pre-flight: isohybrid ausente — no requerido con --binary-images iso."
 fi
+
+# 0e) Pre-flight: grub-mkrescue es el generador final (paso [7/7]).
+if ! command -v grub-mkrescue >/dev/null 2>&1; then
+    echo "Error: grub-mkrescue no está instalado (paquetes grub-common + grub-pc-bin)."
+    echo "       Instala con:  sudo apt install grub-common grub-pc-bin xorriso"
+    exit 1
+fi
+echo "Pre-flight: grub-mkrescue presente ($(command -v grub-mkrescue))."
 echo
 
 # 1) Poblar includes.chroot con Watson + scripts + docs.
-echo "[1/6] Copiando Watson, scripts y docs a includes.chroot..."
+echo "[1/7] Copiando Watson, scripts y docs a includes.chroot..."
 
 WATSON_DEST="$includes_dir/usr/local/bin/watson"
 SCRIPTS_DEST="$includes_dir/usr/local/share/patrick-os/scripts"
@@ -81,7 +89,7 @@ echo "    Listo."
 cd "$script_dir"
 
 # 2) lb clean si hay un build previo.
-echo "[2/6] lb clean..."
+echo "[2/7] lb clean..."
 if [ -d chroot ] || [ -d binary ] || [ -d .build ]; then
     lb clean
 else
@@ -91,7 +99,7 @@ fi
 # 3) Borrar config generada previa (puede contener 'precise' de runs anteriores).
 # Solo borramos lo que produce lb_config; los archivos del usuario
 # (auto/, config/package-lists/, config/hooks/, config/includes.chroot/) se quedan.
-echo "[3/6] Limpiando config generada previa..."
+echo "[3/7] Limpiando config generada previa..."
 rm -f config/binary config/bootstrap config/chroot config/common config/source
 rm -rf config/archives config/binary_* config/chroot_apt config/includes config/includes.binary* config/packages config/packages.binary config/packages.chroot config/preseed config/templates
 # Orphan: ubicación incorrecta de auto/config que quedó de un commit previo.
@@ -100,7 +108,7 @@ rm -rf config/auto
 # 4) lb config — TODOS los parámetros explícitos, sin depender de auto/config.
 # 'noauto' suprime la auto-ejecución de auto/config (que igual hace lo mismo,
 # pero aquí blindamos el path).
-echo "[4/6] lb config (parámetros explícitos)..."
+echo "[4/7] lb config (parámetros explícitos)..."
 # --bootloader en live-build 3.x acepta grub|grub2|syslinux|yaboot:
 #   - syslinux: dispara lb_binary_syslinux → instala
 #     syslinux-themes-ubuntu-oneiric (muerto en noble) y gfxboot-theme-ubuntu
@@ -126,7 +134,7 @@ lb config noauto \
     --debian-installer false \
     --apt-indices false \
     --memtest none \
-    --bootappend-live "boot=live components quiet splash" \
+    --bootappend-live "boot=live components nomodeset" \
     --iso-application "PatrickOS Alpha" \
     --iso-publisher "Patrick Mendoza" \
     --iso-volume "PatrickOS Alpha" \
@@ -136,7 +144,7 @@ lb config noauto \
 
 # 5) Validación: bootstrap debe declarar noble, NUNCA precise, y NUNCA
 #    bootloader syslinux.
-echo "[5/6] Validando config..."
+echo "[5/7] Validando config..."
 echo
 echo "--- config (líneas clave) ---"
 grep -E '^LB_(MODE|DISTRIBUTION|PARENT_DISTRIBUTION|ARCHIVE_AREAS|MIRROR_|BOOTLOADER|BINARY_IMAGES)=' \
@@ -178,36 +186,89 @@ fi
 
 echo "    OK: noble + grub2 + iso confirmados (sin precise/syslinux/grub-legacy/hybrid)."
 
-# 6) lb build: construye la ISO.
-echo "[6/6] lb build (20-40 minutos, requiere red)..."
+# 6) lb build: construye el árbol binary/ (chroot + casper + grub).
+# La ISO transitoria que produce internamente se descarta — el paso [7/7]
+# rearma la imagen final con grub-mkrescue sobre un grub.cfg corregido.
+echo "[6/7] lb build (20-40 minutos, requiere red)..."
 lb build
 
-# Renombrar al nombre del proyecto. live-build varía el nombre del output
-# según --binary-images:
-#   iso         → live-image-amd64.iso
-#   iso-hybrid  → live-image-amd64.hybrid.iso
-# Algunas versiones producen binary.iso. Aceptamos cualquiera de los nombres
-# conocidos; como último recurso, cualquier *.iso en el dir que no sea el
-# output final.
-GENERATED=""
-for candidate in live-image-amd64.iso live-image-amd64.hybrid.iso binary.iso; do
-    if [ -f "$candidate" ]; then
-        GENERATED="$candidate"
-        break
-    fi
-done
-if [ -z "$GENERATED" ]; then
-    GENERATED=$(ls -1 *.iso 2>/dev/null | grep -v '^patrick-os-alpha\.iso$' | head -1)
-fi
+# 7) Post-process: reescribir binary/boot/grub/grub.cfg y empacar con
+# grub-mkrescue como generador final de la ISO.
+#
+# Motivo del bug arreglado aquí (PR #4):
+#   - lb_binary_grub2 deja 'quiet splash' en la línea linux, lo que activa
+#     Plymouth. En QEMU sin GPU dedicada el splash se cuelga y nunca cede
+#     control a LightDM. Resultado: pantalla "Ubuntu 24.04" indefinida.
+#   - Quitamos 'quiet splash' y agregamos 'nomodeset' para evitar KMS,
+#     suficiente para llegar a tty/escritorio mínimo en QEMU genérico.
+#   - Añadimos una entrada de terminal puro (multi-user.target) que
+#     garantiza llegar a una shell aunque LightDM falle. Es la red de
+#     seguridad para validar Watson durante el Alpha.
+echo "[7/7] Reescribiendo grub.cfg y empacando con grub-mkrescue..."
 
-if [ -n "$GENERATED" ] && [ -f "$GENERATED" ]; then
-    mv "$GENERATED" "$OUT_ISO"
-    echo
-    echo "Listo: $OUT_ISO  (origen: $GENERATED)"
-    ls -lh "$OUT_ISO"
-else
-    echo "Error: no se generó ningún archivo .iso en $script_dir."
-    echo "Revisa los logs en $script_dir/binary.log y $script_dir/chroot.log"
-    ls -la "$script_dir"/*.iso 2>/dev/null || echo "  (sin .iso visibles)"
+GRUB_CFG="binary/boot/grub/grub.cfg"
+if [ ! -f "$GRUB_CFG" ]; then
+    echo "Error: $GRUB_CFG no existe — lb build no produjo el árbol esperado."
     exit 1
 fi
+
+# Detectar kernel/initrd reales (versión varía entre builds de noble).
+VMLINUZ_PATH=$(ls binary/casper/vmlinuz-* 2>/dev/null | head -1 || true)
+INITRD_PATH=$(ls binary/casper/initrd.img-* 2>/dev/null | head -1 || true)
+
+if [ -z "$VMLINUZ_PATH" ] || [ -z "$INITRD_PATH" ]; then
+    echo "Error: no se encontraron kernel/initrd en binary/casper/."
+    ls -la binary/casper/ 2>/dev/null || true
+    exit 1
+fi
+
+# Rutas relativas a la raíz del ISO (sin el prefijo 'binary').
+VMLINUZ_ISO="/casper/$(basename "$VMLINUZ_PATH")"
+INITRD_ISO="/casper/$(basename "$INITRD_PATH")"
+
+echo "    Kernel: $VMLINUZ_ISO"
+echo "    Initrd: $INITRD_ISO"
+
+cat > "$GRUB_CFG" <<EOF
+set default=0
+set timeout=10
+
+menuentry "PatrickOS Alpha (live)" {
+    linux  $VMLINUZ_ISO boot=live components nomodeset
+    initrd $INITRD_ISO
+}
+
+menuentry "PatrickOS Alpha (live, fail-safe)" {
+    linux  $VMLINUZ_ISO boot=live components nomodeset noapic noapm nodma nomce nolapic nosmp vga=normal
+    initrd $INITRD_ISO
+}
+
+menuentry "PatrickOS Alpha terminal mode" {
+    linux  $VMLINUZ_ISO boot=live components nomodeset systemd.unit=multi-user.target
+    initrd $INITRD_ISO
+}
+EOF
+
+echo "    grub.cfg reescrito (sin quiet/splash, con nomodeset, +terminal mode):"
+sed 's/^/      /' "$GRUB_CFG"
+
+# Descartar cualquier ISO transitoria que lb build haya dejado, para que el
+# rename accidental de un build previo no esconda fallos de grub-mkrescue.
+rm -f live-image-amd64.iso live-image-amd64.hybrid.iso binary.iso "$OUT_ISO"
+
+echo "    Empacando con grub-mkrescue → $OUT_ISO"
+grub-mkrescue \
+    -o "$OUT_ISO" \
+    -V "PatrickOS Alpha" \
+    --product-name="PatrickOS Alpha" \
+    --product-version="alpha" \
+    binary/
+
+if [ ! -f "$OUT_ISO" ]; then
+    echo "Error: grub-mkrescue no produjo $OUT_ISO."
+    exit 1
+fi
+
+echo
+echo "Listo: $OUT_ISO"
+ls -lh "$OUT_ISO"
