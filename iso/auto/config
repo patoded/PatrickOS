@@ -13,7 +13,7 @@ lb config noauto \
     --distribution noble \
     --archive-areas "main universe multiverse restricted" \
     --linux-flavours generic \
-    --binary-images iso-hybrid \
+    --binary-images iso \
     --bootloader grub2 \
     --debian-installer false \
     --apt-indices false \

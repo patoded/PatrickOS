@@ -44,20 +44,14 @@ fi
 chmod +x "$script_dir/auto/config" 2>/dev/null || true
 chmod +x "$script_dir/config/hooks/normal/"*.hook.chroot 2>/dev/null || true
 
-# 0d) Pre-flight: isohybrid disponible. lb_binary_iso lo invoca DENTRO del
-# chroot (vía 'Chroot chroot "sh binary.sh"'), por lo que el paquete crítico
-# es 'syslinux-utils' en config/package-lists/patrick-os.list.chroot. Aún así,
-# validamos también en el host: ayuda a detectar entornos rotos temprano y
-# algunos builds sin chroot lo necesitan en el host.
+# 0d) Informativo: isohybrid solo aplica a --binary-images iso-hybrid (USB
+# bootable). Para Alpha usamos --binary-images iso (CD-ROM booteable simple
+# en QEMU/VBox), así que isohybrid NO es requisito. Reportamos su presencia
+# como dato y seguimos.
 if command -v isohybrid >/dev/null 2>&1; then
-    echo "Pre-flight: isohybrid en host: $(command -v isohybrid)"
-    if dpkg -s syslinux-utils >/dev/null 2>&1; then
-        echo "            syslinux-utils instalado en host (versión: $(dpkg-query -W -f='\${Version}' syslinux-utils))"
-    fi
+    echo "Pre-flight: isohybrid presente ($(command -v isohybrid)) — no requerido con --binary-images iso."
 else
-    echo "Aviso: isohybrid no está en el PATH del host."
-    echo "       El chroot lo recibirá vía 'syslinux-utils' (package-lists/patrick-os.list.chroot)."
-    echo "       Para tenerlo también en el host:  sudo apt install syslinux-utils"
+    echo "Pre-flight: isohybrid ausente — no requerido con --binary-images iso."
 fi
 echo
 
@@ -117,12 +111,17 @@ echo "[4/6] lb config (parámetros explícitos)..."
 #     vigente en noble). Es el único valor compatible.
 # Verificación en fuente: /usr/lib/live/build/lb_binary_grub2 línea 27 hace
 # 'exit 0' si LB_BOOTLOADER != grub2; línea 54 referencia grub-pc.
+#
+# --binary-images: usamos 'iso' (CD-ROM booteable simple). 'iso-hybrid' añade
+# una firma isolinux.bin con isohybrid post-build, pero isohybrid no reconoce
+# imágenes booteadas con GRUB2 ("boot loader does not have an isolinux.bin
+# hybrid signature"). Para Alpha QEMU/VBox no necesitamos USB-hybrid.
 lb config noauto \
     --mode ubuntu \
     --distribution noble \
     --archive-areas "main universe multiverse restricted" \
     --linux-flavours generic \
-    --binary-images iso-hybrid \
+    --binary-images iso \
     --bootloader grub2 \
     --debian-installer false \
     --apt-indices false \
@@ -168,20 +167,47 @@ if ! grep -q '^LB_BOOTLOADER="grub2"$' config/binary 2>/dev/null; then
     exit 1
 fi
 
-echo "    OK: noble + bootloader grub2 confirmados (sin precise/syslinux/grub-legacy)."
+if ! grep -q '^LB_BINARY_IMAGES="iso"$' config/binary 2>/dev/null; then
+    echo "ERROR: LB_BINARY_IMAGES no es 'iso'. Esperado: iso (CD-ROM simple)."
+    echo "       'iso-hybrid' obliga a isohybrid sobre la ISO GRUB2 → falla con"
+    echo "       'boot loader does not have an isolinux.bin hybrid signature'."
+    grep '^LB_BINARY_IMAGES=' config/binary
+    echo "Abortando antes de lb build."
+    exit 1
+fi
+
+echo "    OK: noble + grub2 + iso confirmados (sin precise/syslinux/grub-legacy/hybrid)."
 
 # 6) lb build: construye la ISO.
 echo "[6/6] lb build (20-40 minutos, requiere red)..."
 lb build
 
-# Renombrar al nombre del proyecto.
-if [ -f "live-image-amd64.hybrid.iso" ]; then
-    mv live-image-amd64.hybrid.iso "$OUT_ISO"
+# Renombrar al nombre del proyecto. live-build varía el nombre del output
+# según --binary-images:
+#   iso         → live-image-amd64.iso
+#   iso-hybrid  → live-image-amd64.hybrid.iso
+# Algunas versiones producen binary.iso. Aceptamos cualquiera de los nombres
+# conocidos; como último recurso, cualquier *.iso en el dir que no sea el
+# output final.
+GENERATED=""
+for candidate in live-image-amd64.iso live-image-amd64.hybrid.iso binary.iso; do
+    if [ -f "$candidate" ]; then
+        GENERATED="$candidate"
+        break
+    fi
+done
+if [ -z "$GENERATED" ]; then
+    GENERATED=$(ls -1 *.iso 2>/dev/null | grep -v '^patrick-os-alpha\.iso$' | head -1)
+fi
+
+if [ -n "$GENERATED" ] && [ -f "$GENERATED" ]; then
+    mv "$GENERATED" "$OUT_ISO"
     echo
-    echo "Listo: $OUT_ISO"
+    echo "Listo: $OUT_ISO  (origen: $GENERATED)"
     ls -lh "$OUT_ISO"
 else
-    echo "Error: no se generó live-image-amd64.hybrid.iso."
+    echo "Error: no se generó ningún archivo .iso en $script_dir."
     echo "Revisa los logs en $script_dir/binary.log y $script_dir/chroot.log"
+    ls -la "$script_dir"/*.iso 2>/dev/null || echo "  (sin .iso visibles)"
     exit 1
 fi
