@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-import os
 import subprocess
 
 
@@ -43,9 +42,7 @@ def ejecutar_comando(comando):
 
     elif comando == "modo desarrollo":
         print("Activando modo desarrollo...")
-        print(f"Ruta actual: {os.getcwd()}")
-        ejecutar_seguro(["git", "status"], "git status")
-        ejecutar_seguro(["tree", "-L", "2"], "tree -L 2")
+        ejecutar_seguro(["./scripts/mode-dev.sh"], "mode-dev.sh")
 
     elif comando == "modo ia":
         print("Activando modo IA...")
