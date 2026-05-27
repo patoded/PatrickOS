@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Workstation profile (PR #5): apagar animaciones GTK y sonidos UI.
+  Net/EnableAnimations afecta a casi todas las apps GTK3/GTK4.
+-->
+<channel name="xsettings" version="1.0">
+  <property name="Net" type="empty">
+    <property name="EnableAnimations" type="bool" value="false"/>
+    <property name="EnableEventSounds" type="bool" value="false"/>
+    <property name="EnableInputFeedbackSounds" type="bool" value="false"/>
+  </property>
+</channel>

@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Workstation profile (PR #5): 4 workspaces, sin compositor, sin parpadeo.
+  Solo declaramos lo que queremos cambiar; el resto hereda defaults XFCE.
+  Documentación: docs/ARCHITECTURE.md sección "Workstation Profile".
+-->
+<channel name="xfwm4" version="1.0">
+  <property name="general" type="empty">
+    <property name="workspace_count" type="int" value="4"/>
+    <property name="use_compositing" type="bool" value="false"/>
+    <property name="cycle_preview" type="bool" value="false"/>
+    <property name="urgent_blink" type="bool" value="false"/>
+    <property name="snap_to_border" type="bool" value="true"/>
+    <property name="snap_to_windows" type="bool" value="true"/>
+  </property>
+</channel>

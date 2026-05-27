@@ -11,3 +11,21 @@ tree
 # Ubuntu noble el binario migró del paquete 'syslinux' a 'syslinux-utils';
 # la heurística Check_package de live-build 3.x lo busca en el lugar viejo.
 syslinux-utils
+
+# PR #5 — Desktop Workstation Profile.
+# Filosofía: multitarea pesada (navegador + VS Code + terminales + IA),
+# baja latencia, copiar/pegar confiable, cero efectos. Ver
+# docs/ARCHITECTURE.md sección "Workstation Profile" para el porqué.
+xfce4-terminal
+# En noble el binario xfce4-clipman vive en el paquete xfce4-clipman-plugin
+# (no existe un paquete 'xfce4-clipman' suelto). Trae también el autostart
+# /etc/xdg/autostart/xfce4-clipman-plugin-autostart.desktop, que es como
+# arrancamos clipman al login sin tocar nada más.
+xfce4-clipman-plugin
+xclip
+xsel
+wmctrl
+xdotool
+rofi
+zram-tools
+btop

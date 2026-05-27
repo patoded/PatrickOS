@@ -1,0 +1,23 @@
+#!/bin/sh
+# Hook chroot — PR #5 Workstation Profile.
+# Habilita servicios ligeros (zramswap) y deja apagados los pesados.
+# 'systemctl enable' funciona dentro del chroot: solo crea symlinks bajo
+# /etc/systemd/system/*.wants/; no intenta arrancar el servicio.
+
+set -e
+
+echo "Hook workstation: habilitando zramswap.service..."
+if [ -f /lib/systemd/system/zramswap.service ] || [ -f /usr/lib/systemd/system/zramswap.service ]; then
+    systemctl enable zramswap.service
+    echo "  zramswap habilitado."
+else
+    echo "  AVISO: zramswap.service no encontrado (paquete zram-tools no instalado?)."
+    exit 1
+fi
+
+# No instalamos ni habilitamos indexadores pesados (tracker, baloo, mlocate
+# en modo daemon). Si en el futuro entran como dependencias transitivas,
+# este es el lugar correcto para enmascararlos:
+#   systemctl mask tracker-miner-fs-3.service || true
+
+echo "Hook workstation: OK."
