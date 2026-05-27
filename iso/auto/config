@@ -1,13 +1,17 @@
 #!/bin/sh
-# auto/config — invocado por 'lb config'. Define parámetros de la build.
-# Ubicación convencional: <build_root>/auto/config (NO dentro de config/).
+# auto/config — invocado por 'lb config' (sin noauto). Define parámetros de
+# la build. Ubicación convencional: <build_root>/auto/config (NO dentro de config/).
+#
+# NOTA: iso/build.sh ya pasa estos mismos parámetros explícitamente a
+# 'lb config noauto', así que este archivo es la fuente "standalone" cuando
+# alguien corre 'lb config' a mano desde iso/. Mantenlo sincronizado.
 
 set -e
 
 lb config noauto \
     --mode ubuntu \
     --distribution noble \
-    --archive-areas "main restricted universe multiverse" \
+    --archive-areas "main universe multiverse restricted" \
     --linux-flavours generic \
     --binary-images iso-hybrid \
     --debian-installer false \
@@ -17,4 +21,7 @@ lb config noauto \
     --iso-application "PatrickOS Alpha" \
     --iso-publisher "Patrick Mendoza" \
     --iso-volume "PatrickOS Alpha" \
+    --mirror-bootstrap http://archive.ubuntu.com/ubuntu/ \
+    --mirror-chroot http://archive.ubuntu.com/ubuntu/ \
+    --mirror-binary http://archive.ubuntu.com/ubuntu/ \
     "${@}"

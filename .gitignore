@@ -13,6 +13,23 @@ iso/*.log
 iso/auto/clean
 iso/auto/build
 
+# Archivos generados por 'lb config' dentro de iso/config/
+iso/config/binary
+iso/config/bootstrap
+iso/config/chroot
+iso/config/common
+iso/config/source
+iso/config/archives/
+iso/config/binary_*/
+iso/config/chroot_apt/
+iso/config/includes/
+iso/config/includes.binary*/
+iso/config/packages/
+iso/config/packages.binary/
+iso/config/packages.chroot/
+iso/config/preseed/
+iso/config/templates/
+
 # Material copiado dinámicamente por iso/build.sh desde watson/, scripts/, docs/
 iso/config/includes.chroot/usr/local/bin/watson
 iso/config/includes.chroot/usr/local/share/patrick-os/
