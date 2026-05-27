@@ -2,6 +2,7 @@
 import os
 import pathlib
 import subprocess
+import sys
 
 # Resolución de la carpeta de scripts:
 #   1. PATRICK_OS_SCRIPTS (override en tiempo de ejecución, ej. instalación al sistema)
@@ -41,15 +42,15 @@ def ejecutar_comando(comando):
 
     if comando == "modo consulta":
         print("Activando modo consulta...")
-        print("Prepararía notas clínicas, plantilla SOAP y herramientas geriátricas.")
+        ejecutar_seguro([str(SCRIPTS_DIR / "mode-consulta.sh")], "mode-consulta.sh")
 
     elif comando == "modo clase":
         print("Activando modo clase...")
-        print("Prepararía documentos docentes, bibliografía y presentaciones.")
+        ejecutar_seguro([str(SCRIPTS_DIR / "mode-clase.sh")], "mode-clase.sh")
 
     elif comando == "modo video":
         print("Activando modo video...")
-        print("Prepararía guiones, editor, OBS, ffmpeg y carpeta multimedia.")
+        ejecutar_seguro([str(SCRIPTS_DIR / "mode-video.sh")], "mode-video.sh")
 
     elif comando == "modo desarrollo":
         print("Activando modo desarrollo...")
@@ -80,8 +81,16 @@ def ejecutar_comando(comando):
 
 
 def main():
-    mostrar_menu()
+    # Modo no interactivo: si hay argumentos, los tratamos como un comando único
+    # y salimos. Útil para hooks, .desktop entries y scripts.
+    #   watson modo desarrollo
+    #   watson preguntar ia
+    if len(sys.argv) > 1:
+        ejecutar_comando(" ".join(sys.argv[1:]))
+        return
 
+    # Modo interactivo: menú con prompt.
+    mostrar_menu()
     activo = True
     while activo:
         comando = input("\nwatson> ")
