@@ -11,7 +11,8 @@ Prototipo en fase **Alpha en construcción** (`v0.2.0-dev`).
 
 - Watson CLI con modos (consulta, clase, video, desarrollo, IA, preguntar IA),
   más comandos meta: `ayuda`, `version`, `estado`, `sistema`, `validar`,
-  `release`, `salir`.
+  `release`, `salir`. Cada uno tiene alias corto (`h`, `v`, `st`, `sys`,
+  `val`, `rel`, `dev`, `ia`, `ask`, `q`); ver `watson ayuda` para la lista.
 - Scripts externos para cada modo, validación de sistema
   (`validate-system.sh`) y checklist de release (`release-checklist.sh`).
 - Manejo de errores robusto (`FileNotFoundError`, `PermissionError`,
