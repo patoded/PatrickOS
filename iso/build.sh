@@ -192,6 +192,32 @@ echo "    OK: noble + grub2 + iso confirmados (sin precise/syslinux/grub-legacy/
 echo "[6/7] lb build (20-40 minutos, requiere red)..."
 lb build
 
+# 6b) Verificación de teclado dentro del chroot.
+# Síntoma de la regresión que disparó esto: la ISO arrancaba con
+# /etc/default/keyboard = us, aunque el hook 0030 escribía latam. Causa
+# probable: un postinst de keyboard-configuration corre después del
+# hook y reescribe el archivo con defaults debconf, o live-config lo
+# regenera al boot. La defensa de build es:
+#   - includes.chroot/etc/default/keyboard como fuente canónica.
+#   - este check que falla rápido si el chroot final no quedó en latam,
+#     antes de gastar minutos en grub-mkrescue + QEMU.
+KBD_FILE="chroot/etc/default/keyboard"
+echo "Verificando $KBD_FILE..."
+if [ ! -f "$KBD_FILE" ]; then
+    echo "ERROR: $KBD_FILE no existe en el chroot construido."
+    echo "       (¿se omitió includes.chroot, o el chroot fue limpiado?)"
+    exit 1
+fi
+if ! grep -q '^XKBLAYOUT="latam"' "$KBD_FILE"; then
+    echo "ERROR: $KBD_FILE no declara XKBLAYOUT=\"latam\". Contenido actual:"
+    sed 's/^/    /' "$KBD_FILE"
+    echo "       Algo (¿postinst, hook posterior, live-config?) sobrescribió"
+    echo "       el archivo canónico de includes.chroot. Abortando antes de"
+    echo "       empacar la ISO."
+    exit 1
+fi
+echo "    OK: XKBLAYOUT=\"latam\" presente en chroot/etc/default/keyboard."
+
 # 7) Post-process: reescribir binary/boot/grub/grub.cfg y empacar con
 # grub-mkrescue como generador final de la ISO.
 #
@@ -243,17 +269,17 @@ set default=0
 set timeout=10
 
 menuentry "PatrickOS Alpha (live)" {
-    linux  $VMLINUZ_ISO boot=casper components nomodeset
+    linux  $VMLINUZ_ISO boot=casper components nomodeset keyboard-layouts=latam
     initrd $INITRD_ISO
 }
 
 menuentry "PatrickOS Alpha (live, fail-safe)" {
-    linux  $VMLINUZ_ISO boot=casper components nomodeset noapic noapm nodma nomce nolapic nosmp vga=normal
+    linux  $VMLINUZ_ISO boot=casper components nomodeset keyboard-layouts=latam noapic noapm nodma nomce nolapic nosmp vga=normal
     initrd $INITRD_ISO
 }
 
 menuentry "PatrickOS Alpha terminal mode" {
-    linux  $VMLINUZ_ISO boot=casper components nomodeset systemd.unit=multi-user.target
+    linux  $VMLINUZ_ISO boot=casper components nomodeset keyboard-layouts=latam systemd.unit=multi-user.target
     initrd $INITRD_ISO
 }
 EOF

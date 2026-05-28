@@ -1,0 +1,13 @@
+# KEYBOARD CONFIGURATION FILE — PatrickOS Alpha
+# Fuente canónica: iso/config/includes.chroot/etc/default/keyboard.
+# El hook 0030-keyboard-locale.hook.chroot reescribe el mismo contenido
+# tras la instalación de paquetes; este archivo es el piso aunque el
+# hook falle o se omita.
+# Cambiar el layout: editar este archivo y reconstruir, o usar
+# 'setxkbmap <layout>' en runtime (no toca este archivo).
+XKBMODEL="pc105"
+XKBLAYOUT="latam"
+XKBVARIANT=""
+XKBOPTIONS=""
+
+BACKSPACE="guess"
