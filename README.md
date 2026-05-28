@@ -97,6 +97,22 @@ una línea por nota con timestamp:
 archivo, dice `Sin notas.`. Para tests o sandbox, override la
 ruta con `PATRICK_OS_NOTES_DIR=/tmp/notes`.
 
+## Tareas rápidas
+
+Pendientes simples desde la terminal, con marcado de hecho. Almacenadas
+en `~/.patrick-os/todos/todos.md` como Markdown con checkboxes:
+
+```bash
+watson tarea "preparar guion del video"   # alias: t, todo
+watson tareas                             # alias: ts, todos
+watson tarea done 3                       # marca la tarea 3 como hecha
+```
+
+`watson tareas` muestra las 30 más recientes con su número (1..N), que
+es estable aunque la lista se truncue: ese mismo número se usa con
+`tarea done <n>`. Si no hay archivo: `Sin tareas.`. Sandbox vía
+`PATRICK_OS_TODOS_DIR=/tmp/todos`.
+
 ## OpenClaw: stub seguro
 
 Watson tiene cableado el comando `openclaw` (alias `claw`) como **stub

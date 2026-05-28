@@ -102,6 +102,18 @@ else
     warn "notes.sh ausente: $notes_script (se shippea con PR #12)"
 fi
 
+# 8) todos.sh presente y ejecutable (backend de 'watson tarea' / 'tareas').
+todos_script="$scripts_dir/todos.sh"
+if [ -f "$todos_script" ]; then
+    if [ -x "$todos_script" ]; then
+        ok "todos.sh presente y ejecutable: $todos_script"
+    else
+        warn "todos.sh presente pero no ejecutable: $todos_script (chmod +x)"
+    fi
+else
+    warn "todos.sh ausente: $todos_script (se shippea con PR #13)"
+fi
+
 echo
 echo "Resumen: WARN=$warn_count FAIL=$fail_count"
 exit "$fail_count"
