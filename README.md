@@ -7,15 +7,18 @@ que orquesta el sistema desde la línea de comandos y se apoya en IA local vía
 
 ## Estado
 
-Prototipo en fase **Alpha en construcción**.
+Prototipo en fase **Alpha en construcción** (`v0.2.0-dev`).
 
-- Watson CLI funcional con seis modos (consulta, clase, video, desarrollo, IA,
-  preguntar IA) más comandos `estado` y `salir`.
-- Scripts externos para `modo desarrollo`, `modo ia` y consultas a Ollama con
-  contexto del proyecto.
+- Watson CLI con modos (consulta, clase, video, desarrollo, IA, preguntar IA),
+  más comandos meta: `ayuda`, `version`, `estado`, `sistema`, `validar`,
+  `release`, `salir`.
+- Scripts externos para cada modo, validación de sistema
+  (`validate-system.sh`) y checklist de release (`release-checklist.sh`).
 - Manejo de errores robusto (`FileNotFoundError`, `PermissionError`,
   `CalledProcessError`).
-- ISO booteable en QEMU/VirtualBox: pendiente (Día 4 del roadmap).
+- ISO booteable en QEMU/VirtualBox: en iteración Alpha (ver `docs/INSTALL.md`).
+- Versionado: las releases se publicarán como tags `vX.Y.Z-alpha` con
+  notas en `docs/RELEASE-vX.Y.Z-alpha.md` cuando estén listas.
 
 ## Quickstart
 
