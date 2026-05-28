@@ -23,14 +23,21 @@ _ALIAS_MAP = {
     "ia": "modo ia",
     "ask": "preguntar ia",
     "claw": "openclaw",
+    "n": "nota",
+    "ns": "notas",
+    "note": "nota",
+    "notes": "notas",
     "q": "salir",
     "exit": "salir",
     "quit": "salir",
 }
 
-# Prefijos que aceptan un texto libre como payload (pregunta a Ollama).
-# Se chequean en main() antes del dispatcher para no lowercasear el texto.
-_ASK_PREFIXES = ("preguntar ia", "ask")
+# Prefijos que aceptan un texto libre como payload tras el primer token.
+# Se chequean en main() ANTES de lowercasear el resto, así la pregunta o
+# la nota mantienen mayúsculas/acentos/comillas tal cual el usuario las
+# tipeó. Listamos formas canónicas y aliases cortos; ejecutar_comando
+# normaliza el primer token vía _ALIAS_MAP, así no duplicamos dispatch.
+_PAYLOAD_PREFIXES = ("preguntar ia", "note", "nota", "ask", "n")
 
 # Resolución de la carpeta de scripts:
 #   1. PATRICK_OS_SCRIPTS (override en tiempo de ejecución, ej. instalación al sistema)
@@ -62,6 +69,8 @@ def mostrar_ayuda():
     print("  validar (val)              corre validate-system.sh (OK/WARN/FAIL)")
     print("  release (rel)              corre release-checklist.sh")
     print("  openclaw (claw)            stub seguro (sin runtime real)")
+    print("  nota \"texto\" (n, note)     guarda nota rápida local")
+    print("  notas (ns, notes)          lista las últimas 20 notas")
     print("  modo consulta              flujo clínico")
     print("  modo clase                 flujo docente")
     print("  modo video                 flujo de edición")
@@ -150,6 +159,18 @@ def ejecutar_comando(comando, pregunta=None):
         # con runtime aislado + whitelist.
         ejecutar_seguro([str(SCRIPTS_DIR / "openclaw-stub.sh")], "openclaw-stub.sh")
 
+    elif comando == "nota":
+        if pregunta is None or not pregunta.strip():
+            print("Uso: watson nota \"texto de la nota\"")
+        else:
+            ejecutar_seguro(
+                [str(SCRIPTS_DIR / "notes.sh"), "add", pregunta],
+                "notes.sh add",
+            )
+
+    elif comando == "notas":
+        ejecutar_seguro([str(SCRIPTS_DIR / "notes.sh"), "list"], "notes.sh list")
+
     elif comando == "salir":
         print("Cerrando Watson.")
         return False
@@ -167,16 +188,18 @@ def main():
     #   watson preguntar ia "resume PatrickOS"
     if len(sys.argv) > 1:
         raw = " ".join(sys.argv[1:])
-        # Prefijos con payload ("preguntar ia <texto>" o su alias "ask
-        # <texto>") se rutean aparte para preservar el texto sin
+        # Prefijos con payload ("preguntar ia <texto>", "nota <texto>" y
+        # sus aliases) se rutean aparte para preservar el texto sin
         # lowercasing y sin abrir prompt interactivo. Exigimos exact
         # match o un espacio después del prefijo, así "preguntarx" o
-        # "asking" no se confunden con un prefijo válido.
+        # "notar" no se confunden con un prefijo válido. Pasamos el
+        # prefijo tal cual a ejecutar_comando — el alias map lo
+        # normaliza a la forma canónica.
         lowered = raw.lower()
-        for prefijo in _ASK_PREFIXES:
+        for prefijo in _PAYLOAD_PREFIXES:
             if lowered == prefijo or lowered.startswith(prefijo + " "):
                 resto = raw[len(prefijo):].lstrip()
-                ejecutar_comando("preguntar ia", resto or None)
+                ejecutar_comando(prefijo, resto or None)
                 return
         ejecutar_comando(raw)
         return

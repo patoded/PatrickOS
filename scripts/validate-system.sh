@@ -90,6 +90,18 @@ else
     warn "openclaw stub ausente: $openclaw_stub (se shippea con PR #10)"
 fi
 
+# 7) notes.sh presente y ejecutable (backend de 'watson nota' / 'notas').
+notes_script="$scripts_dir/notes.sh"
+if [ -f "$notes_script" ]; then
+    if [ -x "$notes_script" ]; then
+        ok "notes.sh presente y ejecutable: $notes_script"
+    else
+        warn "notes.sh presente pero no ejecutable: $notes_script (chmod +x)"
+    fi
+else
+    warn "notes.sh ausente: $notes_script (se shippea con PR #12)"
+fi
+
 echo
 echo "Resumen: WARN=$warn_count FAIL=$fail_count"
 exit "$fail_count"
