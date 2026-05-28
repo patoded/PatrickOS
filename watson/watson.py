@@ -4,6 +4,8 @@ import pathlib
 import subprocess
 import sys
 
+_VERSION = "v0.2.0-dev"
+
 # Resolución de la carpeta de scripts:
 #   1. PATRICK_OS_SCRIPTS (override en tiempo de ejecución, ej. instalación al sistema)
 #   2. ../scripts relativo a este archivo (modo repositorio)
@@ -24,17 +26,41 @@ def ejecutar_seguro(cmd, descripcion):
         print(f"  Error: '{cmd[0]}' terminó con código {e.returncode}.")
 
 
-def mostrar_menu():
+def mostrar_ayuda():
     print("\nWatson - Agente local PatrickOS")
     print("Comandos disponibles:")
-    print("  modo consulta")
-    print("  modo clase")
-    print("  modo video")
-    print("  modo desarrollo")
-    print("  modo ia")
-    print("  preguntar ia")
-    print("  estado")
-    print("  salir")
+    print("  ayuda                  esta lista")
+    print("  version                versión de Watson/PatrickOS")
+    print("  estado                 estado básico de Watson")
+    print("  sistema                diagnóstico (uname, free, lscpu, swap, df)")
+    print("  validar                corre validate-system.sh (OK/WARN/FAIL)")
+    print("  release                corre release-checklist.sh")
+    print("  modo consulta          flujo clínico")
+    print("  modo clase             flujo docente")
+    print("  modo video             flujo de edición")
+    print("  modo desarrollo        entorno dev")
+    print("  modo ia                chequea Ollama/GPU")
+    print("  preguntar ia           pregunta a Ollama con contexto local")
+    print("  salir                  cierra el menú interactivo")
+    print("\nEjemplos:")
+    print("  watson validar")
+    print("  watson sistema")
+    print("  watson modo desarrollo")
+
+
+def mostrar_version():
+    print("PatrickOS Alpha")
+    print("Watson CLI")
+    print(f"versión actual: {_VERSION}")
+
+
+def mostrar_sistema():
+    print("Diagnóstico de sistema PatrickOS")
+    ejecutar_seguro(["uname", "-a"], "uname")
+    ejecutar_seguro(["free", "-h"], "memoria")
+    ejecutar_seguro(["lscpu"], "cpu")
+    ejecutar_seguro(["swapon", "--show"], "swap")
+    ejecutar_seguro(["df", "-h", "/"], "disco")
 
 
 def ejecutar_comando(comando):
@@ -70,6 +96,21 @@ def ejecutar_comando(comando):
     elif comando == "estado":
         print("Watson activo. Sistema base en modo desarrollo.")
 
+    elif comando == "ayuda":
+        mostrar_ayuda()
+
+    elif comando == "version":
+        mostrar_version()
+
+    elif comando == "sistema":
+        mostrar_sistema()
+
+    elif comando == "validar":
+        ejecutar_seguro([str(SCRIPTS_DIR / "validate-system.sh")], "validate-system.sh")
+
+    elif comando == "release":
+        ejecutar_seguro([str(SCRIPTS_DIR / "release-checklist.sh")], "release-checklist.sh")
+
     elif comando == "salir":
         print("Cerrando Watson.")
         return False
@@ -90,7 +131,7 @@ def main():
         return
 
     # Modo interactivo: menú con prompt.
-    mostrar_menu()
+    mostrar_ayuda()
     activo = True
     while activo:
         comando = input("\nwatson> ")
