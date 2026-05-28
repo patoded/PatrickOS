@@ -49,6 +49,10 @@ scripts/pr-merge.sh                                   # squash + back to main (=
 
 Atajos vía Makefile: `make check`, `make pr TITLE="..."`, `make merge [PR=N]`.
 
+Si `make check` falla con `[FAIL] check-executable-scripts`, algún
+`scripts/*.sh` perdió `+x` (típico al editarse desde Windows/WSL share).
+Rescate: `make fix-perms` y volver a correr `make check`.
+
 Para hacer preguntas locales a Ollama con el contexto del proyecto:
 
 ```bash
