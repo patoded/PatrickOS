@@ -63,7 +63,10 @@ def mostrar_sistema():
     ejecutar_seguro(["df", "-h", "/"], "disco")
 
 
-def ejecutar_comando(comando):
+def ejecutar_comando(comando, pregunta=None):
+    # 'pregunta' es payload opcional; hoy solo lo usa "preguntar ia" cuando
+    # el usuario pasa la pregunta por argv y no la queremos lowercasear ni
+    # pedirla por input(). Mantener el mismo dispatcher para no duplicar.
     comando = comando.strip().lower()
 
     if comando == "modo consulta":
@@ -87,7 +90,9 @@ def ejecutar_comando(comando):
         ejecutar_seguro([str(SCRIPTS_DIR / "mode-ai.sh")], "mode-ai.sh")
 
     elif comando == "preguntar ia":
-        pregunta = input("Tu pregunta: ").strip()
+        if pregunta is None:
+            pregunta = input("Tu pregunta: ")
+        pregunta = pregunta.strip()
         if not pregunta:
             print("No se recibió pregunta. Cancelando.")
         else:
@@ -125,9 +130,16 @@ def main():
     # Modo no interactivo: si hay argumentos, los tratamos como un comando único
     # y salimos. Útil para hooks, .desktop entries y scripts.
     #   watson modo desarrollo
-    #   watson preguntar ia
+    #   watson preguntar ia "resume PatrickOS"
     if len(sys.argv) > 1:
-        ejecutar_comando(" ".join(sys.argv[1:]))
+        raw = " ".join(sys.argv[1:])
+        # "preguntar ia <texto>" se rutea aparte para preservar el texto
+        # de la pregunta sin lowercasing y sin abrir prompt interactivo.
+        prefijo = "preguntar ia"
+        if raw.lower().startswith(prefijo):
+            ejecutar_comando(prefijo, raw[len(prefijo):].lstrip() or None)
+        else:
+            ejecutar_comando(raw)
         return
 
     # Modo interactivo: menú con prompt.
