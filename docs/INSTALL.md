@@ -81,7 +81,58 @@ Resultados esperados:
 Con eso queda validada la integración Watson en la ISO Alpha. Si los tres
 comandos responden sin error, el Alpha está cumplido para esta iteración.
 
-## 5. (Opcional) Verificar modo gráfico
+## 5. Teclado (Latin American Spanish por default)
+
+PatrickOS Alpha arranca con layout **latam** (Spanish Latin American) en
+consola y XFCE. Es el layout que coincide con el teclado físico ES-LA
+que se usa desde Windows, así que `= / - _ : ; " '` y demás caracteres
+salen donde se esperan.
+
+Implementación en el repo:
+
+- `iso/config/hooks/normal/0030-keyboard-locale.hook.chroot` escribe
+  `/etc/default/keyboard` con `XKBLAYOUT="latam"`.
+- `iso/config/includes.chroot/etc/X11/xorg.conf.d/00-keyboard.conf`
+  refuerza el layout dentro de Xorg.
+
+### Si QEMU sigue mostrando caracteres raros
+
+QEMU traduce scancodes según su propio `-k`. Si tu host es Windows con
+teclado ES-LA y aun así ves layout 'us' dentro de la VM, lanza QEMU con:
+
+```bash
+qemu-system-x86_64 \
+    -m 4096 -smp 2 -enable-kvm \
+    -k es \
+    -cdrom iso/patrick-os-alpha.iso -boot d
+```
+
+`-k es` no es exacto a latam pero cubre casi todos los símbolos que
+suelen romperse. Para una correspondencia 1:1 perfecta, pasa el teclado
+físico por USB passthrough (`-device usb-host,...`) en lugar de depender
+del mapeo de QEMU.
+
+### Cambiar el layout temporalmente dentro de la sesión
+
+```bash
+setxkbmap latam        # X11 / XFCE
+sudo loadkeys la-latin1  # TTY (opcional)
+```
+
+Para hacerlo persistente entre boots, editar `/etc/default/keyboard` y
+ejecutar `sudo setupcon`.
+
+### Verificar el layout actual
+
+```bash
+setxkbmap -query           # qué tiene Xorg cargado ahora mismo
+cat /etc/default/keyboard  # qué dice el archivo de sistema
+localectl status           # vista combinada (systemd)
+```
+
+Los tres deberían mostrar `latam` después de un boot limpio.
+
+## 6. (Opcional) Verificar modo gráfico
 
 Si el menú 1 levanta el escritorio XFCE, también puedes correr:
 

@@ -29,3 +29,12 @@ xdotool
 rofi
 zram-tools
 btop
+
+# Keyboard Compatibility Layer. Estos paquetes ya vienen como deps de
+# xfce4/lightdm en noble, pero los declaramos explícitos para que
+# /etc/default/keyboard (escrito por hook 0030) tenga consumidores
+# garantizados: keyboard-configuration gestiona el archivo, console-setup
+# lo aplica a las TTY al boot.
+keyboard-configuration
+console-setup
+x11-xkb-utils

@@ -134,7 +134,7 @@ lb config noauto \
     --debian-installer false \
     --apt-indices false \
     --memtest none \
-    --bootappend-live "boot=live components nomodeset" \
+    --bootappend-live "boot=casper components nomodeset" \
     --iso-application "PatrickOS Alpha" \
     --iso-publisher "Patrick Mendoza" \
     --iso-volume "PatrickOS Alpha" \
@@ -204,6 +204,15 @@ lb build
 #   - Añadimos una entrada de terminal puro (multi-user.target) que
 #     garantiza llegar a una shell aunque LightDM falle. Es la red de
 #     seguridad para validar Watson durante el Alpha.
+#
+# IMPORTANTE — boot=casper, NO boot=live:
+#   live-build es Debian-centrico y por default usa 'boot=live'. Para
+#   ISOs basadas en Ubuntu el initrd lleva el hook 'casper' (no 'live'),
+#   asi que el parametro correcto es 'boot=casper'. Si se deja
+#   'boot=live', el initramfs no encuentra ningun script live-init,
+#   ejecuta /sbin/init que no existe en el initrd, y el kernel hace:
+#     Kernel panic - not syncing: Attempted to kill init!
+#   Cualquier futura entrada del menu debe usar 'boot=casper'.
 echo "[7/7] Reescribiendo grub.cfg y empacando con grub-mkrescue..."
 
 GRUB_CFG="binary/boot/grub/grub.cfg"
@@ -234,17 +243,17 @@ set default=0
 set timeout=10
 
 menuentry "PatrickOS Alpha (live)" {
-    linux  $VMLINUZ_ISO boot=live components nomodeset
+    linux  $VMLINUZ_ISO boot=casper components nomodeset
     initrd $INITRD_ISO
 }
 
 menuentry "PatrickOS Alpha (live, fail-safe)" {
-    linux  $VMLINUZ_ISO boot=live components nomodeset noapic noapm nodma nomce nolapic nosmp vga=normal
+    linux  $VMLINUZ_ISO boot=casper components nomodeset noapic noapm nodma nomce nolapic nosmp vga=normal
     initrd $INITRD_ISO
 }
 
 menuentry "PatrickOS Alpha terminal mode" {
-    linux  $VMLINUZ_ISO boot=live components nomodeset systemd.unit=multi-user.target
+    linux  $VMLINUZ_ISO boot=casper components nomodeset systemd.unit=multi-user.target
     initrd $INITRD_ISO
 }
 EOF

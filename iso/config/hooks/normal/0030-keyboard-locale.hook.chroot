@@ -1,0 +1,43 @@
+#!/bin/sh
+# Hook chroot — Keyboard Compatibility Layer.
+#
+# Problema: por default Ubuntu live arranca con layout 'us', lo que rompe
+# = / - _ : ; " ' en teclados ES-LA. Eso hace inviable escribir comandos
+# de terminal y usar Watson con fluidez.
+#
+# Solución: fijar /etc/default/keyboard a latam. Lo lee:
+#   - systemd-localed / keyboard-setup.service (consola TTY)
+#   - X11 vía /etc/X11/xorg.conf.d/00-keyboard.conf (GUI XFCE)
+#   - cualquier app que respete /etc/default/keyboard
+#
+# El layout en X11 lo refuerza el include en
+# iso/config/includes.chroot/etc/X11/xorg.conf.d/00-keyboard.conf
+# (se copia tal cual al chroot).
+
+set -e
+
+echo "Hook keyboard: escribiendo /etc/default/keyboard (latam)..."
+
+cat > /etc/default/keyboard <<'EOF'
+# KEYBOARD CONFIGURATION FILE — PatrickOS Alpha
+# Generado por iso/config/hooks/normal/0030-keyboard-locale.hook.chroot
+# Para cambiar en runtime: setxkbmap <layout>  (no toca este archivo).
+XKBMODEL="pc105"
+XKBLAYOUT="latam"
+XKBVARIANT=""
+XKBOPTIONS=""
+
+BACKSPACE="guess"
+EOF
+
+# Reconstruir cache de console-setup si la herramienta está presente.
+# En live-build chroot setupcon a veces falla (no hay /dev/console real);
+# lo dejamos best-effort. systemd al boot vuelve a aplicarlo desde
+# /etc/default/keyboard.
+if command -v setupcon >/dev/null 2>&1; then
+    echo "Hook keyboard: setupcon --save-only..."
+    setupcon --save-only 2>/dev/null || \
+        echo "  (setupcon falló en chroot — esperado; systemd lo aplica al boot)"
+fi
+
+echo "Hook keyboard: OK (layout latam aplicado)."

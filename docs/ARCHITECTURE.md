@@ -116,6 +116,24 @@ falta.
 - Autostart de clipman: lo trae el paquete `xfce4-clipman-plugin` en
   `/etc/xdg/autostart/`, no lo duplicamos.
 
+### Keyboard Compatibility Layer
+
+- **Prioridad**: escritura fluida de comandos. Si `=`, `-`, `_`, `:`, `/`
+  o las comillas no salen donde se esperan, todo lo demás del Alpha se
+  cae (terminal, Watson, edición de archivos).
+- **Layout inicial**: `latam` (Spanish Latin American), aplicado a TTY,
+  consola y X11/XFCE desde el primer boot. No requiere intervención del
+  usuario.
+- **Objetivo**: evitar fricción al copiar/pegar y al usar terminal en
+  QEMU o en metal. El layout en GUI coincide con el de consola, así que
+  no hay sorpresa al alternar entre xfce4-terminal y un TTY.
+
+Implementación: hook `0030-keyboard-locale.hook.chroot` escribe
+`/etc/default/keyboard`, e `includes.chroot/etc/X11/xorg.conf.d/00-keyboard.conf`
+lo refuerza en Xorg. Si en el futuro hace falta soportar varios
+layouts conmutables, ese es el lugar para añadir `XKBOPTIONS="grp:..."`.
+Cambiar en runtime: `setxkbmap latam`.
+
 ### Qué NO entra en este perfil
 
 GNOME, KDE, LibreOffice, OBS, drivers NVIDIA, OpenClaw, y por ahora
