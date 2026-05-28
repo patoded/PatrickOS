@@ -37,6 +37,17 @@ make install
 watson
 ```
 
+## Flujo rápido de desarrollo
+
+```bash
+scripts/new-branch.sh feat/algo                       # rama desde main al día
+make check                                            # lint + smoke pre-PR
+scripts/pr-create.sh main "feat: algo"                # abre PR (= make pr TITLE=...)
+scripts/pr-merge.sh                                   # squash + back to main (= make merge)
+```
+
+Atajos vía Makefile: `make check`, `make pr TITLE="..."`, `make merge [PR=N]`.
+
 Para hacer preguntas locales a Ollama con el contexto del proyecto:
 
 ```bash
