@@ -22,6 +22,7 @@ _ALIAS_MAP = {
     "dev": "modo desarrollo",
     "ia": "modo ia",
     "ask": "preguntar ia",
+    "claw": "openclaw",
     "q": "salir",
     "exit": "salir",
     "quit": "salir",
@@ -60,6 +61,7 @@ def mostrar_ayuda():
     print("  sistema (sys)              diagnóstico (uname, free, lscpu, swap, df)")
     print("  validar (val)              corre validate-system.sh (OK/WARN/FAIL)")
     print("  release (rel)              corre release-checklist.sh")
+    print("  openclaw (claw)            stub seguro (sin runtime real)")
     print("  modo consulta              flujo clínico")
     print("  modo clase                 flujo docente")
     print("  modo video                 flujo de edición")
@@ -141,6 +143,12 @@ def ejecutar_comando(comando, pregunta=None):
 
     elif comando == "release":
         ejecutar_seguro([str(SCRIPTS_DIR / "release-checklist.sh")], "release-checklist.sh")
+
+    elif comando == "openclaw":
+        # Stub seguro: no carga runtime real, no toca red, no ejecuta
+        # herramientas. Solo prepara el comando para integración futura
+        # con runtime aislado + whitelist.
+        ejecutar_seguro([str(SCRIPTS_DIR / "openclaw-stub.sh")], "openclaw-stub.sh")
 
     elif comando == "salir":
         print("Cerrando Watson.")

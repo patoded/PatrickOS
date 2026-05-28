@@ -77,6 +77,19 @@ else
     warn "xfconf-query no instalado (sin XFCE en este sistema)"
 fi
 
+# 6) OpenClaw stub presente y ejecutable. Es solo el stub no-op de PR #10;
+# no implica que haya runtime real instalado.
+openclaw_stub="$scripts_dir/openclaw-stub.sh"
+if [ -f "$openclaw_stub" ]; then
+    if [ -x "$openclaw_stub" ]; then
+        ok "openclaw stub presente y ejecutable: $openclaw_stub"
+    else
+        warn "openclaw stub presente pero no ejecutable: $openclaw_stub (chmod +x)"
+    fi
+else
+    warn "openclaw stub ausente: $openclaw_stub (se shippea con PR #10)"
+fi
+
 echo
 echo "Resumen: WARN=$warn_count FAIL=$fail_count"
 exit "$fail_count"

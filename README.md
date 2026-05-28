@@ -73,6 +73,25 @@ patrick-os/
 
 Detalles de diseño en [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
 
+## OpenClaw: stub seguro
+
+Watson tiene cableado el comando `openclaw` (alias `claw`) como **stub
+no-op**. No carga runtime, no toca red, no ejecuta herramientas. Su único
+papel hoy es reservar el comando y la ruta del script para que la
+integración futura no requiera mover dispatch ni alias.
+
+```bash
+watson openclaw   # o: watson claw
+# OpenClaw Runtime: stub
+# Estado: no instalado / no activo
+# Modo seguro: sin ejecución de herramientas
+# Próximo paso: integrar runtime aislado con whitelist
+```
+
+Cuando exista el runtime real (aislado + con whitelist explícita de
+herramientas), reemplaza el stub en su lugar. Esta sección NO promete
+runtime real ni fecha.
+
 ## Roadmap (resumen)
 
 | Fase | Estado |
