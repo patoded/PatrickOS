@@ -31,6 +31,12 @@ run "bash -n scripts/*.sh" bash -c '
     exit "$fails"
 '
 
+# Permission check antes de cualquier paso que invoque scripts: si algo
+# perdió +x (típico al editar via share SMB de WSL desde Windows), los
+# pasos siguientes fallan en silencio porque ejecutar_seguro de Watson
+# captura PermissionError y reporta [OK]. Aquí lo destapamos fuerte.
+run "check-executable-scripts" bash scripts/check-executable-scripts.sh
+
 run "make test" make test
 run "watson estado"  python3 watson/watson.py estado
 run "watson version" python3 watson/watson.py version
