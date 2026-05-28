@@ -6,6 +6,31 @@ import sys
 
 _VERSION = "v0.2.0-dev"
 
+# Aliases cortos → forma canónica. Normalizamos una sola vez al entrar a
+# ejecutar_comando, así el dispatcher de abajo no necesita duplicar ramas
+# por cada atajo. Si un alias debe llevar payload (caso "ask <texto>"),
+# main() lo trata aparte para preservar el texto sin lowercaseo.
+_ALIAS_MAP = {
+    "h": "ayuda",
+    "help": "ayuda",
+    "v": "version",
+    "ver": "version",
+    "st": "estado",
+    "sys": "sistema",
+    "val": "validar",
+    "rel": "release",
+    "dev": "modo desarrollo",
+    "ia": "modo ia",
+    "ask": "preguntar ia",
+    "q": "salir",
+    "exit": "salir",
+    "quit": "salir",
+}
+
+# Prefijos que aceptan un texto libre como payload (pregunta a Ollama).
+# Se chequean en main() antes del dispatcher para no lowercasear el texto.
+_ASK_PREFIXES = ("preguntar ia", "ask")
+
 # Resolución de la carpeta de scripts:
 #   1. PATRICK_OS_SCRIPTS (override en tiempo de ejecución, ej. instalación al sistema)
 #   2. ../scripts relativo a este archivo (modo repositorio)
@@ -28,24 +53,24 @@ def ejecutar_seguro(cmd, descripcion):
 
 def mostrar_ayuda():
     print("\nWatson - Agente local PatrickOS")
-    print("Comandos disponibles:")
-    print("  ayuda                  esta lista")
-    print("  version                versión de Watson/PatrickOS")
-    print("  estado                 estado básico de Watson")
-    print("  sistema                diagnóstico (uname, free, lscpu, swap, df)")
-    print("  validar                corre validate-system.sh (OK/WARN/FAIL)")
-    print("  release                corre release-checklist.sh")
-    print("  modo consulta          flujo clínico")
-    print("  modo clase             flujo docente")
-    print("  modo video             flujo de edición")
-    print("  modo desarrollo        entorno dev")
-    print("  modo ia                chequea Ollama/GPU")
-    print("  preguntar ia           pregunta a Ollama con contexto local")
-    print("  salir                  cierra el menú interactivo")
+    print("Comandos disponibles (alias entre paréntesis):")
+    print("  ayuda (h, help)            esta lista")
+    print("  version (v, ver)           versión de Watson/PatrickOS")
+    print("  estado (st)                estado básico de Watson")
+    print("  sistema (sys)              diagnóstico (uname, free, lscpu, swap, df)")
+    print("  validar (val)              corre validate-system.sh (OK/WARN/FAIL)")
+    print("  release (rel)              corre release-checklist.sh")
+    print("  modo consulta              flujo clínico")
+    print("  modo clase                 flujo docente")
+    print("  modo video                 flujo de edición")
+    print("  modo desarrollo (dev)      entorno dev")
+    print("  modo ia (ia)               chequea Ollama/GPU")
+    print("  preguntar ia (ask)         pregunta a Ollama con contexto local")
+    print("  salir (q, exit, quit)      cierra el menú interactivo")
     print("\nEjemplos:")
-    print("  watson validar")
-    print("  watson sistema")
-    print("  watson modo desarrollo")
+    print("  watson val")
+    print("  watson ask \"resume PatrickOS\"")
+    print("  watson dev")
 
 
 def mostrar_version():
@@ -68,6 +93,7 @@ def ejecutar_comando(comando, pregunta=None):
     # el usuario pasa la pregunta por argv y no la queremos lowercasear ni
     # pedirla por input(). Mantener el mismo dispatcher para no duplicar.
     comando = comando.strip().lower()
+    comando = _ALIAS_MAP.get(comando, comando)
 
     if comando == "modo consulta":
         print("Activando modo consulta...")
@@ -133,13 +159,18 @@ def main():
     #   watson preguntar ia "resume PatrickOS"
     if len(sys.argv) > 1:
         raw = " ".join(sys.argv[1:])
-        # "preguntar ia <texto>" se rutea aparte para preservar el texto
-        # de la pregunta sin lowercasing y sin abrir prompt interactivo.
-        prefijo = "preguntar ia"
-        if raw.lower().startswith(prefijo):
-            ejecutar_comando(prefijo, raw[len(prefijo):].lstrip() or None)
-        else:
-            ejecutar_comando(raw)
+        # Prefijos con payload ("preguntar ia <texto>" o su alias "ask
+        # <texto>") se rutean aparte para preservar el texto sin
+        # lowercasing y sin abrir prompt interactivo. Exigimos exact
+        # match o un espacio después del prefijo, así "preguntarx" o
+        # "asking" no se confunden con un prefijo válido.
+        lowered = raw.lower()
+        for prefijo in _ASK_PREFIXES:
+            if lowered == prefijo or lowered.startswith(prefijo + " "):
+                resto = raw[len(prefijo):].lstrip()
+                ejecutar_comando("preguntar ia", resto or None)
+                return
+        ejecutar_comando(raw)
         return
 
     # Modo interactivo: menú con prompt.
