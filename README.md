@@ -77,6 +77,26 @@ patrick-os/
 
 Detalles de diseño en [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
 
+## Notas rápidas
+
+Capturar y listar notas locales desde la terminal, sin abrir editor:
+
+```bash
+watson nota "idea: caching de modelos por sesión"   # alias: n
+watson notas                                        # alias: ns, notes
+```
+
+Las notas viven en `~/.patrick-os/notes/notes.md` como texto plano,
+una línea por nota con timestamp:
+
+```
+2026-05-28 10:07:14 | idea: caching de modelos por sesión
+```
+
+`watson notas` muestra las 20 más recientes. Si todavía no hay
+archivo, dice `Sin notas.`. Para tests o sandbox, override la
+ruta con `PATRICK_OS_NOTES_DIR=/tmp/notes`.
+
 ## OpenClaw: stub seguro
 
 Watson tiene cableado el comando `openclaw` (alias `claw`) como **stub
