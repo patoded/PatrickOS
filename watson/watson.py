@@ -27,6 +27,10 @@ _ALIAS_MAP = {
     "ns": "notas",
     "note": "nota",
     "notes": "notas",
+    "t": "tarea",
+    "ts": "tareas",
+    "todo": "tarea",
+    "todos": "tareas",
     "q": "salir",
     "exit": "salir",
     "quit": "salir",
@@ -37,7 +41,16 @@ _ALIAS_MAP = {
 # la nota mantienen mayúsculas/acentos/comillas tal cual el usuario las
 # tipeó. Listamos formas canónicas y aliases cortos; ejecutar_comando
 # normaliza el primer token vía _ALIAS_MAP, así no duplicamos dispatch.
-_PAYLOAD_PREFIXES = ("preguntar ia", "note", "nota", "ask", "n")
+_PAYLOAD_PREFIXES = (
+    "preguntar ia",
+    "note",
+    "nota",
+    "todo",
+    "tarea",
+    "ask",
+    "n",
+    "t",
+)
 
 # Resolución de la carpeta de scripts:
 #   1. PATRICK_OS_SCRIPTS (override en tiempo de ejecución, ej. instalación al sistema)
@@ -71,6 +84,9 @@ def mostrar_ayuda():
     print("  openclaw (claw)            stub seguro (sin runtime real)")
     print("  nota \"texto\" (n, note)     guarda nota rápida local")
     print("  notas (ns, notes)          lista las últimas 20 notas")
+    print("  tarea \"texto\" (t, todo)    agrega tarea pendiente")
+    print("  tarea done <n>             marca tarea n como completada")
+    print("  tareas (ts, todos)         lista últimas 30 tareas")
     print("  modo consulta              flujo clínico")
     print("  modo clase                 flujo docente")
     print("  modo video                 flujo de edición")
@@ -170,6 +186,30 @@ def ejecutar_comando(comando, pregunta=None):
 
     elif comando == "notas":
         ejecutar_seguro([str(SCRIPTS_DIR / "notes.sh"), "list"], "notes.sh list")
+
+    elif comando == "tarea":
+        if pregunta is None or not pregunta.strip():
+            print("Uso: watson tarea \"texto\"  |  watson tarea done <n>")
+        else:
+            p = pregunta.strip()
+            parts = p.split()
+            # Sub-comando: 'done <numero>' marca tarea N como completada.
+            # Strict: exactamente 2 tokens, segundo numérico. Cualquier
+            # otra cosa ("done foo bar") se trata como texto libre y
+            # cae al add.
+            if len(parts) == 2 and parts[0].lower() == "done" and parts[1].isdigit():
+                ejecutar_seguro(
+                    [str(SCRIPTS_DIR / "todos.sh"), "done", parts[1]],
+                    "todos.sh done",
+                )
+            else:
+                ejecutar_seguro(
+                    [str(SCRIPTS_DIR / "todos.sh"), "add", p],
+                    "todos.sh add",
+                )
+
+    elif comando == "tareas":
+        ejecutar_seguro([str(SCRIPTS_DIR / "todos.sh"), "list"], "todos.sh list")
 
     elif comando == "salir":
         print("Cerrando Watson.")
