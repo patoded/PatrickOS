@@ -126,6 +126,18 @@ else
     warn "daily.sh ausente: $daily_script (se shippea con PR #14)"
 fi
 
+# 10) home.sh presente y ejecutable (backend de 'watson inicio').
+home_script="$scripts_dir/home.sh"
+if [ -f "$home_script" ]; then
+    if [ -x "$home_script" ]; then
+        ok "home.sh presente y ejecutable: $home_script"
+    else
+        warn "home.sh presente pero no ejecutable: $home_script (chmod +x)"
+    fi
+else
+    warn "home.sh ausente: $home_script (se shippea con PR #15)"
+fi
+
 echo
 echo "Resumen: WARN=$warn_count FAIL=$fail_count"
 exit "$fail_count"

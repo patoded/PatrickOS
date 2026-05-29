@@ -144,6 +144,29 @@ Si alguna sección no tiene contenido, dice `Sin notas de hoy.` /
 muestra hasta 10 entradas. Sandbox: `PATRICK_OS_NOTES_DIR` y
 `PATRICK_OS_TODOS_DIR` aplican igual que en `nota` / `tarea`.
 
+## Home dashboard
+
+Panel rápido tipo "home" para arrancar el día sin abrir cinco comandos
+distintos. Combina versión de Watson, estado de sistema, el resumen
+diario y un cheatsheet de atajos:
+
+```bash
+watson inicio   # alias: i, home, panel
+```
+
+Secciones (todas locales, sin red):
+
+- **Estado Watson:** versión actual (`v0.2.0-dev`).
+- **Sistema:** `hostname`, `uptime -p` (con fallback a `uptime` plano si
+  la flag no está soportada), y `free -h` resumida.
+- **Daily:** delega en `daily.sh` si está presente y ejecutable. Si
+  todavía no se instaló, lo dice y sigue.
+- **Atajos:** cheatsheet de los comandos más usados (`nota`, `tarea`,
+  `diario`, `ia`, `claw`).
+
+Hereda `PATRICK_OS_NOTES_DIR` y `PATRICK_OS_TODOS_DIR` al delegar en
+`daily.sh`, así que el sandbox de notas/tareas funciona igual.
+
 ## OpenClaw: stub seguro
 
 Watson tiene cableado el comando `openclaw` (alias `claw`) como **stub
