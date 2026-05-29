@@ -113,6 +113,37 @@ es estable aunque la lista se truncue: ese mismo número se usa con
 `tarea done <n>`. Si no hay archivo: `Sin tareas.`. Sandbox vía
 `PATRICK_OS_TODOS_DIR=/tmp/todos`.
 
+## Resumen diario
+
+Vista rápida del día sin abrir los archivos: notas de hoy, tareas
+pendientes y tareas completadas hoy, leídas de los mismos archivos
+locales que `watson nota` y `watson tarea`.
+
+```bash
+watson diario   # alias: d, daily
+```
+
+Salida:
+
+```
+PatrickOS Daily
+Fecha: 2026-05-28
+
+Notas de hoy:
+2026-05-28 10:07:14 | idea: caching de modelos por sesión
+
+Tareas pendientes:
+- [ ] 2026-05-27 18:22:01 | preparar guion del video
+
+Tareas completadas hoy:
+- [x] 2026-05-28 09:14:33 | revisar PR #13
+```
+
+Si alguna sección no tiene contenido, dice `Sin notas de hoy.` /
+`Sin tareas pendientes.` / `Sin tareas completadas hoy.`. Cada sección
+muestra hasta 10 entradas. Sandbox: `PATRICK_OS_NOTES_DIR` y
+`PATRICK_OS_TODOS_DIR` aplican igual que en `nota` / `tarea`.
+
 ## OpenClaw: stub seguro
 
 Watson tiene cableado el comando `openclaw` (alias `claw`) como **stub
