@@ -7,7 +7,7 @@ que orquesta el sistema desde la línea de comandos y se apoya en IA local vía
 
 ## Estado
 
-Prototipo en fase **Alpha en construcción** (`v0.2.0-dev`).
+Prototipo en fase **Alpha en preparación** (`v0.2.0-alpha`, ISO pendiente de build).
 
 - Watson CLI con modos (consulta, clase, video, desarrollo, IA, preguntar IA),
   más comandos meta: `ayuda`, `version`, `estado`, `sistema`, `validar`,
@@ -78,6 +78,18 @@ patrick-os/
 Detalles de diseño en [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
 Contexto del proyecto: [`docs/PROJECT_CONTEXT.md`](docs/PROJECT_CONTEXT.md).
 Checklist v0.2.0-alpha: [`docs/V0.2_ALPHA_CHECKLIST.md`](docs/V0.2_ALPHA_CHECKLIST.md).
+Release notes v0.2.0-alpha: [`docs/RELEASE_NOTES_v0.2.0-alpha.md`](docs/RELEASE_NOTES_v0.2.0-alpha.md).
+
+## Validar antes de publicar v0.2.0-alpha
+
+```bash
+make check
+scripts/release-checklist.sh v0.2.0-alpha
+```
+
+`release-checklist.sh` reporta `OK`/`TODO`/`FAIL`: `FAIL` bloquea,
+`TODO` (ej. ISO no construida todavía) es esperado en este punto del
+ciclo. Exit code = nº de FAILs.
 
 ## Notas rápidas
 
@@ -158,7 +170,7 @@ watson inicio   # alias: i, home, panel
 
 Secciones (todas locales, sin red):
 
-- **Estado Watson:** versión actual (`v0.2.0-dev`).
+- **Estado Watson:** versión actual (`v0.2.0-alpha`).
 - **Sistema:** `hostname`, `uptime -p` (con fallback a `uptime` plano si
   la flag no está soportada), y `free -h` resumida.
 - **Daily:** delega en `daily.sh` si está presente y ejecutable. Si
