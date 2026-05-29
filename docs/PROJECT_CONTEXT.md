@@ -28,6 +28,11 @@ Repositorio principal:
 PatrickOS ya tiene una primera Alpha publicada:
 `v0.1.0-alpha`
 
+Y está en cierre/preparación de:
+`v0.2.0-alpha` — código y docs listos, ISO pendiente de construcción.
+La build de ISO v0.2 se hará en un PR aparte una vez validado el
+checklist (`docs/V0.2_ALPHA_CHECKLIST.md`) y `scripts/release-checklist.sh v0.2.0-alpha`.
+
 La Alpha incluye:
 
 * ISO live basada en Ubuntu 24.04.
