@@ -76,6 +76,7 @@ patrick-os/
 ```
 
 Detalles de diseño en [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
+Contexto del proyecto: [`docs/PROJECT_CONTEXT.md`](docs/PROJECT_CONTEXT.md).
 
 ## Notas rápidas
 
