@@ -33,6 +33,9 @@ _ALIAS_MAP = {
     "todos": "tareas",
     "d": "diario",
     "daily": "diario",
+    "i": "inicio",
+    "home": "inicio",
+    "panel": "inicio",
     "q": "salir",
     "exit": "salir",
     "quit": "salir",
@@ -90,6 +93,7 @@ def mostrar_ayuda():
     print("  tarea done <n>             marca tarea n como completada")
     print("  tareas (ts, todos)         lista últimas 30 tareas")
     print("  diario (d, daily)          resumen del día (notas + tareas)")
+    print("  inicio (i, home, panel)    panel rápido WatsonOS (estado + daily + atajos)")
     print("  modo consulta              flujo clínico")
     print("  modo clase                 flujo docente")
     print("  modo video                 flujo de edición")
@@ -216,6 +220,9 @@ def ejecutar_comando(comando, pregunta=None):
 
     elif comando == "diario":
         ejecutar_seguro([str(SCRIPTS_DIR / "daily.sh")], "daily.sh")
+
+    elif comando == "inicio":
+        ejecutar_seguro([str(SCRIPTS_DIR / "home.sh")], "home.sh")
 
     elif comando == "salir":
         print("Cerrando Watson.")
