@@ -77,6 +77,7 @@ patrick-os/
 
 Detalles de diseño en [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
 Contexto del proyecto: [`docs/PROJECT_CONTEXT.md`](docs/PROJECT_CONTEXT.md).
+Release notes v0.2.0-alpha: [`docs/RELEASE_NOTES_v0.2.0-alpha.md`](docs/RELEASE_NOTES_v0.2.0-alpha.md).
 
 ## Notas rápidas
 
