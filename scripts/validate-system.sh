@@ -114,6 +114,18 @@ else
     warn "todos.sh ausente: $todos_script (se shippea con PR #13)"
 fi
 
+# 9) daily.sh presente y ejecutable (backend de 'watson diario').
+daily_script="$scripts_dir/daily.sh"
+if [ -f "$daily_script" ]; then
+    if [ -x "$daily_script" ]; then
+        ok "daily.sh presente y ejecutable: $daily_script"
+    else
+        warn "daily.sh presente pero no ejecutable: $daily_script (chmod +x)"
+    fi
+else
+    warn "daily.sh ausente: $daily_script (se shippea con PR #14)"
+fi
+
 echo
 echo "Resumen: WARN=$warn_count FAIL=$fail_count"
 exit "$fail_count"

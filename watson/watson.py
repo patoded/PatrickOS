@@ -31,6 +31,8 @@ _ALIAS_MAP = {
     "ts": "tareas",
     "todo": "tarea",
     "todos": "tareas",
+    "d": "diario",
+    "daily": "diario",
     "q": "salir",
     "exit": "salir",
     "quit": "salir",
@@ -87,6 +89,7 @@ def mostrar_ayuda():
     print("  tarea \"texto\" (t, todo)    agrega tarea pendiente")
     print("  tarea done <n>             marca tarea n como completada")
     print("  tareas (ts, todos)         lista últimas 30 tareas")
+    print("  diario (d, daily)          resumen del día (notas + tareas)")
     print("  modo consulta              flujo clínico")
     print("  modo clase                 flujo docente")
     print("  modo video                 flujo de edición")
@@ -210,6 +213,9 @@ def ejecutar_comando(comando, pregunta=None):
 
     elif comando == "tareas":
         ejecutar_seguro([str(SCRIPTS_DIR / "todos.sh"), "list"], "todos.sh list")
+
+    elif comando == "diario":
+        ejecutar_seguro([str(SCRIPTS_DIR / "daily.sh")], "daily.sh")
 
     elif comando == "salir":
         print("Cerrando Watson.")
