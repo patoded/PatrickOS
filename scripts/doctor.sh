@@ -191,7 +191,7 @@ run_diagnostic() {
     # plans/ no recibe la copia histórica.
     echo "--- openclaw dry-run smoke ---"
     oc_script="$script_dir/openclaw-stub.sh"
-    oc_out="$(PATRICK_OS_HOME="$SANDBOX" "$oc_script" run --mode desarrollo "doctor smoke" 2>&1)"
+    oc_out="$(PATRICK_OS_HOME="$SANDBOX" "$oc_script" run --mode desarrollo --tag doctor --priority high "doctor smoke" 2>&1)"
     oc_rc=$?
     plan="$SANDBOX/workspaces/desarrollo/last-plan.md"
     plans_dir="$SANDBOX/workspaces/desarrollo/plans"
@@ -210,12 +210,22 @@ run_diagnostic() {
     if [ -f "$plan_index" ]; then
         index_lines=$(wc -l < "$plan_index" | tr -d ' ')
     fi
-    if [ "$oc_rc" -eq 0 ] && [ -f "$plan" ] && [ "$plan_count" -ge 1 ] && [ "$index_lines" -ge 1 ]; then
-        ok "openclaw dry-run generó plan + historial ($plan_count) + index ($index_lines línea/s)"
+    # El run inyectó --tag doctor --priority high, así que el índice
+    # tiene que contener literalmente 'doctor' y 'high'. Si la
+    # extensión de tag/priority se rompió, esto lo destapa rápido.
+    index_has_tag=0
+    index_has_priority=0
+    if [ -f "$plan_index" ]; then
+        grep -q $'\tdoctor\t' "$plan_index" && index_has_tag=1
+        grep -q $'\thigh\t' "$plan_index" && index_has_priority=1
+    fi
+    if [ "$oc_rc" -eq 0 ] && [ -f "$plan" ] && [ "$plan_count" -ge 1 ] \
+       && [ "$index_lines" -ge 1 ] && [ "$index_has_tag" -eq 1 ] && [ "$index_has_priority" -eq 1 ]; then
+        ok "openclaw dry-run generó plan + historial ($plan_count) + index ($index_lines línea/s, tag/priority OK)"
     else
         plan_state="$([ -f "$plan" ] && echo present || echo missing)"
         index_state="$([ -f "$plan_index" ] && echo present || echo missing)"
-        fail "openclaw dry-run (exit=$oc_rc last-plan=$plan_state historial=$plan_count index=$index_state líneas=$index_lines)"
+        fail "openclaw dry-run (exit=$oc_rc last-plan=$plan_state historial=$plan_count index=$index_state líneas=$index_lines tag=$index_has_tag priority=$index_has_priority)"
         show_tail "$oc_out"
     fi
 
@@ -236,20 +246,28 @@ run_diagnostic() {
     fi
 
     # Plan search smoke: 'recent' debe listar ≥1 línea con la task del
-    # smoke ('doctor smoke') y 'search' debe encontrarla. Si alguno
-    # falla, FAIL.
+    # smoke ('doctor smoke'), 'search' debe encontrarla, y los filtros
+    # por tag (doctor) y priority (high) tienen que matchear el plan
+    # que acabamos de generar.
     rec_out="$(PATRICK_OS_HOME="$SANDBOX" "$ws_script" recent desarrollo 2>&1)"
     rec_rc=$?
     srch_out="$(PATRICK_OS_HOME="$SANDBOX" "$ws_script" search desarrollo "doctor smoke" 2>&1)"
     srch_rc=$?
-    if [ "$rec_rc" -eq 0 ] && [ "$srch_rc" -eq 0 ] \
-       && echo "$rec_out" | grep -q "doctor smoke" \
-       && echo "$srch_out" | grep -q "doctor smoke"; then
-        ok "plan search (recent + search)"
+    ftag_out="$(PATRICK_OS_HOME="$SANDBOX" "$ws_script" filter-tag desarrollo doctor 2>&1)"
+    ftag_rc=$?
+    fprio_out="$(PATRICK_OS_HOME="$SANDBOX" "$ws_script" filter-priority desarrollo high 2>&1)"
+    fprio_rc=$?
+    if [ "$rec_rc" -eq 0 ] && [ "$srch_rc" -eq 0 ] && [ "$ftag_rc" -eq 0 ] && [ "$fprio_rc" -eq 0 ] \
+       && echo "$rec_out"   | grep -q "doctor smoke" \
+       && echo "$srch_out"  | grep -q "doctor smoke" \
+       && echo "$ftag_out"  | grep -q "doctor smoke" \
+       && echo "$fprio_out" | grep -q "doctor smoke"; then
+        ok "plan search (recent + search + filter-tag + filter-priority)"
     else
-        fail "plan search (recent rc=$rec_rc, search rc=$srch_rc)"
+        fail "plan search (rec=$rec_rc srch=$srch_rc ftag=$ftag_rc fprio=$fprio_rc)"
         show_tail "$rec_out"
-        show_tail "$srch_out"
+        show_tail "$ftag_out"
+        show_tail "$fprio_out"
     fi
     echo
 

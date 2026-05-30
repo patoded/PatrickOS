@@ -65,13 +65,14 @@ usage() {
     cat <<'EOF'
 Uso:
   openclaw-stub.sh status
-  openclaw-stub.sh run "tarea"
-  openclaw-stub.sh run --mode <modo> "tarea"
+  openclaw-stub.sh run [--mode <modo>] [--tag <tag>] [--priority <low|normal|high>] "tarea"
   openclaw-stub.sh kill ["razón"]
   openclaw-stub.sh unkill
   openclaw-stub.sh policy [show|path|check]
 
 Modos permitidos: consulta, clase, video, desarrollo (default), ia, general
+Priority permitidas: low, normal (default), high
+Tag default: general (debe ser [A-Za-z0-9_-]+)
 EOF
 }
 
@@ -138,17 +139,58 @@ case "$cmd" in
         ;;
     run)
         mode="desarrollo"
-        # --mode opcional debe ir antes del texto libre.
-        if [ "${1:-}" = "--mode" ]; then
-            shift || true
-            if [ -z "${1:-}" ]; then
-                echo "Error: --mode requiere un valor." >&2
-                usage >&2
-                exit 1
-            fi
-            mode="$1"
-            shift || true
+        tag="general"
+        priority="normal"
+        # Parseo de flags --mode / --tag / --priority en cualquier
+        # orden, antes del texto libre. Cualquier arg que no matchee
+        # una flag conocida corta el loop y queda como inicio de la
+        # tarea. Si una flag aparece sin valor (o con otro flag como
+        # valor), abortamos con uso explícito.
+        while [ "$#" -gt 0 ]; do
+            case "${1:-}" in
+                --mode)
+                    shift || true
+                    if [ -z "${1:-}" ] || [[ "${1:-}" == --* ]]; then
+                        echo "Error: --mode requiere un valor." >&2; usage >&2; exit 1
+                    fi
+                    mode="$1"; shift || true
+                    ;;
+                --tag)
+                    shift || true
+                    if [ -z "${1:-}" ] || [[ "${1:-}" == --* ]]; then
+                        echo "Error: --tag requiere un valor." >&2; usage >&2; exit 1
+                    fi
+                    tag="$1"; shift || true
+                    ;;
+                --priority)
+                    shift || true
+                    if [ -z "${1:-}" ] || [[ "${1:-}" == --* ]]; then
+                        echo "Error: --priority requiere un valor." >&2; usage >&2; exit 1
+                    fi
+                    priority="$1"; shift || true
+                    ;;
+                *)
+                    break
+                    ;;
+            esac
+        done
+
+        # tag debe ser path-safe: solo letras/números/-/_. Más
+        # adelante el tag puede formar parte de paths o filtros, así
+        # que cortamos cualquier inyección acá.
+        if ! [[ "$tag" =~ ^[A-Za-z0-9_-]+$ ]]; then
+            echo "Error: tag inválido (solo letras/números/-/_): '$tag'." >&2
+            exit 1
         fi
+        # priority es un enum chico.
+        case "$priority" in
+            low|normal|high) ;;
+            *)
+                echo "Error: priority debe ser low/normal/high. Recibido: '$priority'." >&2
+                exit 1
+                ;;
+        esac
+
         if ! mode_allowed "$mode"; then
             audit_log "run_invalid_mode" "$mode" "fail" "modo no permitido"
             echo "Error: modo '$mode' no permitido." >&2
@@ -226,6 +268,8 @@ case "$cmd" in
 Fecha: $fecha
 Modo: $mode
 Workspace: $ws_dir
+Tag: $tag
+Priority: $priority
 Policy: OK
 Tool whitelist: empty
 Kill switch: disabled
@@ -265,14 +309,14 @@ EOF_PLAN
         plan_basename="${ts_filename}-plan.md"
         cp "$plan_file" "$plans_dir/$plan_basename"
 
-        # Índice TSV append-only: timestamp \t mode \t filename \t task.
-        # Sanitizamos la tarea de tabs/newlines/CR para no romper el
-        # formato — el resto pasa tal cual. Un parser razonable puede
-        # cortar por tab y, si hay tabs accidentales en el campo final,
-        # rejuntarlos.
+        # Índice TSV append-only: timestamp \t mode \t filename \t tag
+        # \t priority \t task. Sanitizamos la tarea de tabs/newlines/CR
+        # para no romper el formato — el resto pasa tal cual.
+        # Lectores (recent/search/filter-*) toleran índices viejos de 4
+        # columnas: en ese caso tag=general / priority=normal.
         tarea_clean="$(printf '%s' "$tarea" | tr -d '\t\n\r')"
-        printf '%s\t%s\t%s\t%s\n' \
-            "$ts_filename" "$mode" "$plan_basename" "$tarea_clean" \
+        printf '%s\t%s\t%s\t%s\t%s\t%s\n' \
+            "$ts_filename" "$mode" "$plan_basename" "$tag" "$priority" "$tarea_clean" \
             >> "$plans_dir/index.tsv"
 
         printf '%s | mode=%s | dry-run | task=%s\n' \

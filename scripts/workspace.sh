@@ -34,6 +34,8 @@ Uso:
   workspace.sh plan-index <modo>
   workspace.sh recent <modo> [n]
   workspace.sh search <modo> <texto>
+  workspace.sh filter-tag <modo> <tag>
+  workspace.sh filter-priority <modo> <low|normal|high>
 
 Modos permitidos: consulta, clase, video, desarrollo, ia, general
 EOF
@@ -171,7 +173,16 @@ case "$cmd" in
             echo "Sin índice de planes."
             exit 0
         fi
-        cat "$idx"
+        # Reformat estable, compatible con índice viejo (4 col,
+        # pre-tags/priority): se rellenan defaults general/normal.
+        awk -F'\t' '
+            {
+                if (NF >= 6) {
+                    printf "%s | %s | %s | %s | %s\n", $1, $3, $4, $5, $6
+                } else {
+                    printf "%s | %s | %s | %s | %s\n", $1, $3, "general", "normal", $4
+                }
+            }' "$idx"
         ;;
     recent)
         mode="${1:-}"
@@ -187,9 +198,17 @@ case "$cmd" in
             echo "Sin planes."
             exit 0
         fi
-        # Reformatear las últimas N entradas del índice TSV:
-        # timestamp | filename | task   (omitimos el modo: redundante).
-        tail -n "$n" "$idx" | awk -F'\t' '{printf "%s | %s | %s\n", $1, $3, $4}'
+        # Últimas N entradas reformateadas como
+        # timestamp | filename | tag | priority | task
+        # (modo omitido porque ya viene en la query).
+        tail -n "$n" "$idx" | awk -F'\t' '
+            {
+                if (NF >= 6) {
+                    printf "%s | %s | %s | %s | %s\n", $1, $3, $4, $5, $6
+                } else {
+                    printf "%s | %s | %s | %s | %s\n", $1, $3, "general", "normal", $4
+                }
+            }'
         ;;
     search)
         mode="${1:-}"
@@ -207,17 +226,83 @@ case "$cmd" in
             echo "Sin coincidencias."
             exit 0
         fi
-        # grep -iF: case-insensitive, fixed-string (sin regex; el
-        # needle puede contener . * etc. sin sorpresas). -- corta
-        # opciones por si el usuario busca algo que arranca con '-'.
-        # || true porque grep retorna 1 sin matches y no queremos
-        # tumbar el script.
+        # grep -iF: case-insensitive, fixed-string. -- corta opciones
+        # por si el needle arranca con '-'. || true para no abortar
+        # cuando no hay matches.
         matches=$(grep -iF -- "$needle" "$idx" || true)
         if [ -z "$matches" ]; then
             echo "Sin coincidencias."
             exit 0
         fi
-        echo "$matches" | awk -F'\t' '{printf "%s | %s | %s\n", $1, $3, $4}'
+        echo "$matches" | awk -F'\t' '
+            {
+                if (NF >= 6) {
+                    printf "%s | %s | %s | %s | %s\n", $1, $3, $4, $5, $6
+                } else {
+                    printf "%s | %s | %s | %s | %s\n", $1, $3, "general", "normal", $4
+                }
+            }'
+        ;;
+    filter-tag)
+        mode="${1:-}"
+        require_mode "$mode"
+        shift || true
+        needle="${1:-}"
+        if [ -z "$needle" ]; then
+            echo "Error: falta tag. Uso: workspace.sh filter-tag <modo> <tag>" >&2
+            exit 1
+        fi
+        idx="$WORKSPACES_DIR/$mode/plans/index.tsv"
+        if [ ! -f "$idx" ]; then
+            echo "Sin coincidencias."
+            exit 0
+        fi
+        # Match exacto en la columna tag (col 4 nueva; default
+        # 'general' para índices viejos de 4 columnas).
+        out=$(awk -F'\t' -v n="$needle" '
+            {
+                if (NF >= 6) { t=$4 } else { t="general" }
+                if (t != n) next
+                if (NF >= 6) printf "%s | %s | %s | %s | %s\n", $1, $3, $4, $5, $6
+                else         printf "%s | %s | %s | %s | %s\n", $1, $3, "general", "normal", $4
+            }' "$idx")
+        if [ -z "$out" ]; then
+            echo "Sin coincidencias."
+        else
+            echo "$out"
+        fi
+        ;;
+    filter-priority)
+        mode="${1:-}"
+        require_mode "$mode"
+        shift || true
+        needle="${1:-}"
+        case "$needle" in
+            low|normal|high) ;;
+            *)
+                echo "Error: priority debe ser low/normal/high. Recibido: '${needle:-}'." >&2
+                exit 1
+                ;;
+        esac
+        idx="$WORKSPACES_DIR/$mode/plans/index.tsv"
+        if [ ! -f "$idx" ]; then
+            echo "Sin coincidencias."
+            exit 0
+        fi
+        # Match exacto en la columna priority (col 5 nueva; default
+        # 'normal' para índices viejos).
+        out=$(awk -F'\t' -v n="$needle" '
+            {
+                if (NF >= 6) { p=$5 } else { p="normal" }
+                if (p != n) next
+                if (NF >= 6) printf "%s | %s | %s | %s | %s\n", $1, $3, $4, $5, $6
+                else         printf "%s | %s | %s | %s | %s\n", $1, $3, "general", "normal", $4
+            }' "$idx")
+        if [ -z "$out" ]; then
+            echo "Sin coincidencias."
+        else
+            echo "$out"
+        fi
         ;;
     show-plan)
         mode="${1:-}"
