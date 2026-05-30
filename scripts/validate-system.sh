@@ -267,6 +267,19 @@ else
     warn "openclaw-negative-tests.sh ausente: $negtest_script"
 fi
 
+# 21) openclaw-simulate-tool.sh presente y ejecutable (simulación
+# audit-only de tools del registry).
+sim_script="$scripts_dir/openclaw-simulate-tool.sh"
+if [ -f "$sim_script" ]; then
+    if [ -x "$sim_script" ]; then
+        ok "openclaw-simulate-tool.sh presente y ejecutable: $sim_script"
+    else
+        warn "openclaw-simulate-tool.sh presente pero no ejecutable: $sim_script (chmod +x)"
+    fi
+else
+    warn "openclaw-simulate-tool.sh ausente: $sim_script"
+fi
+
 echo
 echo "Resumen: WARN=$warn_count FAIL=$fail_count"
 exit "$fail_count"

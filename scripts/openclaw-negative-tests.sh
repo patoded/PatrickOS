@@ -238,6 +238,56 @@ PATRICK_OS_TOOLS="$TAMPER_TOOLS" run_fail \
     "$CT" check
 rm -f "$TAMPER_TOOLS"
 
+# ---------------------------------------------------------------
+# 14) Simulate tool inexistente → FAIL (audit tool_unknown)
+# ---------------------------------------------------------------
+SIM="$script_dir/openclaw-simulate-tool.sh"
+run_fail "14. simulate tool inexistente → rechazado" \
+    "$SIM" unknown_tool_for_negtest
+
+# ---------------------------------------------------------------
+# 15) Simulate sobre registry tampered con enabled: true → FAIL
+# ---------------------------------------------------------------
+TAMPER_TOOLS2=$(mktemp)
+if [ -n "$SOURCE_TOOLS" ] && [ -f "$SOURCE_TOOLS" ]; then
+    sed 's/enabled: false/enabled: true/g' "$SOURCE_TOOLS" > "$TAMPER_TOOLS2"
+else
+    # Reuso del fallback de test 13.
+    cat > "$TAMPER_TOOLS2" <<'EOF_TT2'
+version: 1
+default_state: disabled
+tools:
+  - name: read_file
+    enabled: true
+    description: dummy
+    allowed_modes: [desarrollo]
+    allowed_args: []
+    denied_args: []
+    filesystem_scope: "/tmp/"
+    network: disabled
+    sudo: disabled
+    timeout_seconds: 5
+    requires_confirmation: true
+    log_level: audit
+EOF_TT2
+fi
+PATRICK_OS_TOOLS="$TAMPER_TOOLS2" run_fail \
+    "15. simulate sobre registry tampered (enabled: true) → rechazado" \
+    "$SIM" read_file
+rm -f "$TAMPER_TOOLS2"
+
+# ---------------------------------------------------------------
+# 16) Simulate herramienta conocida (disabled) → simulated-only
+# ---------------------------------------------------------------
+sim_out="$("$SIM" read_file 2>&1)"
+sim_rc=$?
+if [ "$sim_rc" -eq 0 ] && echo "$sim_out" | grep -q "Status: simulated-only"; then
+    ok "16. simulate read_file → exit 0 con Status: simulated-only"
+else
+    fail_msg "16. simulate read_file falló (rc=$sim_rc o sin 'simulated-only' en output)"
+    echo "$sim_out" | tail -n 6 | sed 's/^/        /'
+fi
+
 echo
 echo "Resumen: OK=$ok_count FAIL=$fail_count"
 exit "$fail_count"

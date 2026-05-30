@@ -148,6 +148,8 @@ def mostrar_ayuda():
     print("  claw status                muestra estado del runtime + kill switch")
     print("  audit (aud) [list|tail|path] lectura del audit log estructurado de OpenClaw")
     print("  tools (tls) [list|show|path] viewer del registry de herramientas (Beta-0: vacío)")
+    print("  tools simulate <name>      simula tool del registry (NO ejecuta nada; audita)")
+    print("  tool / simtool             azúcar: 'tool X' = 'tools X', 'simtool X' = 'tools simulate X'")
     print("  contracts (ctr) [check|show|path] validador de contratos (registry baseline + shape)")
     print("  negative-tests (nt|negtest)  suite negativa de OpenClaw (gates deben bloquear)")
     print("  claw negative-tests          idem, vía openclaw-stub")
@@ -187,6 +189,8 @@ def mostrar_ayuda():
     print("  watson tools list")
     print("  watson contracts check")
     print("  watson negative-tests")
+    print("  watson tool simulate read_file")
+    print("  watson simtool git_status")
 
 
 def mostrar_version():
@@ -411,6 +415,24 @@ def main():
     #   watson preguntar ia "resume PatrickOS"
     if len(sys.argv) > 1:
         raw = " ".join(sys.argv[1:])
+        # Pre-reescrituras simples antes del prefix matching:
+        #   'tool'   (singular) → 'tools'   (canónico plural).
+        #   'simtool X [...]'   → 'tools simulate X [...]'.
+        # Conviven con el dispatcher 'tools', que ya forwardea
+        # subcomandos a openclaw-tools.sh — incluyendo 'simulate'
+        # que delega en openclaw-simulate-tool.sh.
+        lowered = raw.lower()
+        if lowered == "tool":
+            raw, lowered = "tools", "tools"
+        elif lowered.startswith("tool "):
+            raw = "tools " + raw[len("tool "):]
+            lowered = raw.lower()
+        if lowered == "simtool":
+            raw, lowered = "tools simulate", "tools simulate"
+        elif lowered.startswith("simtool "):
+            raw = "tools simulate " + raw[len("simtool "):]
+            lowered = raw.lower()
+
         # Prefijos con payload ("preguntar ia <texto>", "nota <texto>" y
         # sus aliases) se rutean aparte para preservar el texto sin
         # lowercasing y sin abrir prompt interactivo. Exigimos exact
@@ -418,7 +440,6 @@ def main():
         # "notar" no se confunden con un prefijo válido. Pasamos el
         # prefijo tal cual a ejecutar_comando — el alias map lo
         # normaliza a la forma canónica.
-        lowered = raw.lower()
         for prefijo in _PAYLOAD_PREFIXES:
             if lowered == prefijo or lowered.startswith(prefijo + " "):
                 resto = raw[len(prefijo):].lstrip()

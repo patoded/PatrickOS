@@ -196,6 +196,23 @@ watson contracts check                # alias: ctr
 make contracts-check                  # target del Makefile
 ```
 
+Adicionalmente desde v0.4 hay **simulación audit-only** de cualquier
+candidata del registry, que ejercita el camino de invocación sin
+ejecutar binarios:
+
+```bash
+scripts/openclaw-simulate-tool.sh <tool> [args...]
+watson tool simulate <tool>      # alias de plural
+watson tools simulate <tool>
+watson simtool <tool>            # sugar
+```
+
+La simulación valida que la tool existe en el registry, que su
+`enabled` es `false`, y emite el plan `Status: simulated-only`
++ el evento `tool_simulated` en el audit log. Tool inexistente →
+exit 1 + `tool_unknown`. Tool con `enabled: true` → exit 1 +
+`tool_enabled_forbidden`. **Ningún path ejecuta nada.**
+
 El validador hace tres cosas:
 
 1. Confirma los invariantes baseline (`version: 1`,

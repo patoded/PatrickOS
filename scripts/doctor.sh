@@ -405,6 +405,31 @@ run_diagnostic() {
     fi
     echo
 
+    # 12) Tool simulation smoke. Verifica que simular dos tools
+    # conocidas (read_file + git_status) termine en simulated-only,
+    # y que una tool inexistente sea rechazada con exit != 0.
+    # NO ejecuta herramienta real — la simulación es un audit-only
+    # gate.
+    echo "--- tool simulation smoke ---"
+    sim_script="$script_dir/openclaw-simulate-tool.sh"
+    if [ ! -x "$sim_script" ]; then
+        warn "openclaw-simulate-tool.sh no presente o sin +x en $script_dir"
+    else
+        sim1_out="$("$sim_script" read_file 2>&1)";   sim1_rc=$?
+        sim2_out="$("$sim_script" git_status 2>&1)";  sim2_rc=$?
+        sim3_out="$("$sim_script" unknown_tool_for_smoke 2>&1)"; sim3_rc=$?
+        if [ "$sim1_rc" -eq 0 ] && echo "$sim1_out" | grep -q "Status: simulated-only" \
+           && [ "$sim2_rc" -eq 0 ] && echo "$sim2_out" | grep -q "Status: simulated-only" \
+           && [ "$sim3_rc" -ne 0 ]; then
+            ok "tool simulation: read_file + git_status simulated-only; unknown rechazado"
+        else
+            fail "tool simulation (rc1=$sim1_rc rc2=$sim2_rc rc3=$sim3_rc)"
+            show_tail "$sim1_out"
+            show_tail "$sim3_out"
+        fi
+    fi
+    echo
+
     echo "Resumen: OK=$ok_count WARN=$warn_count FAIL=$fail_count"
 }
 
