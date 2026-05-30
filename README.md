@@ -397,13 +397,44 @@ Cada `run` genera/actualiza:
   watson ws filter-priority desarrollo high       # match exacto en priority
   ```
 
-  Formato de salida común: `timestamp | filename | tag | priority | task`
-  (sin la columna modo, redundante con la query). Todo lee
-  `index.tsv` local; sin red, sin herramientas externas. Ejemplo:
+  Formato de salida común: `timestamp | filename | tag | priority | status | task`
+  (sin la columna modo, redundante con la query). El `status` sale
+  del sidecar de aprobación (ver sección siguiente); planes sin
+  sidecar se reportan como `pending`. Todo lee `index.tsv` local;
+  sin red, sin herramientas externas. Ejemplo:
 
   ```bash
   watson claw run --mode desarrollo --tag clase --priority high "preparar clase geriatría"
   ```
+
+## Aprobación de planes
+
+Cada plan dry-run puede marcarse localmente como `approved` o
+`rejected` sin ejecutar nada. **Aprobar NO corre ninguna
+herramienta**; solo deja un sidecar `<filename>.state` al lado del
+`.md` con el estado, timestamp y razón opcional. Beta-0 sigue
+siendo dry-run puro; este estado es preparación para Beta-1.
+
+```bash
+watson ws plan-status desarrollo 20260530-130934-plan.md
+# status=pending     (si todavía no fue aprobado/rechazado)
+
+watson ws approve-plan desarrollo 20260530-130934-plan.md
+watson ws plan-status desarrollo 20260530-130934-plan.md
+# status=approved
+# timestamp=2026-05-30 13:15:42
+
+watson ws reject-plan desarrollo 20260530-130934-plan.md "cambio de criterio"
+# status=rejected
+# timestamp=...
+# reason=cambio de criterio
+```
+
+`approve-plan` / `reject-plan` / `plan-status` solo aceptan
+**basename** dentro de `<workspace>/plans/`; nombres con `/` o `..`
+se rechazan con exit 1 antes de tocar el FS. La sobrescritura es
+intencional: si cambia tu decisión, volvés a aprobar/rechazar y el
+sidecar refleja el nuevo estado.
 - `~/.patrick-os/openclaw/openclaw.log` — log append-only,
   `timestamp | mode=... | dry-run | task=...`.
 - `~/.patrick-os/openclaw/audit.log` — bitácora estructurada (ver
