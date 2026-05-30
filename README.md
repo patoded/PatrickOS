@@ -284,6 +284,42 @@ Eventos registrados: `status`, `policy`, `kill`, `unkill`,
 la razón del kill cuando aplica; no se registra nada más allá de
 texto que el usuario tipeó.
 
+## Execution gate Beta-0
+
+`watson claw execute --mode <m> <filename>` corre la **cadena de
+seguridad completa** sobre un plan dry-run aprobado y se detiene **por
+diseño** al final. En Beta-0 todavía no hay runtime de ejecución; este
+comando existe para probar el flujo de gates (kill switch, policy,
+aprobación) y dejar registro auditable de cada bloqueo.
+
+Aclaraciones explícitas:
+
+- **Aprobar un plan NO ejecuta nada.** `approve-plan` solo escribe un
+  sidecar local; lo único que mira esa marca es el execution gate.
+- **`execute` siempre bloquea en Beta-0.** Si todos los gates pasan,
+  el comando imprime `Estado: blocked-by-design` y sale en 1.
+
+Orden de gates (primero en disparar gana):
+
+1. `KILL_SWITCH` activo → `event=execute_blocked_kill_switch`, exit 1.
+2. Policy check falla (red/sudo/whitelist/etc.) → `event=execute_blocked_policy`, exit 1.
+3. Sidecar no marca `status=approved` → `event=execute_missing_approval`, exit 1, con instrucción de aprobar.
+4. Todos los gates pasan → `event=execute_blocked_beta0`, mensaje `blocked-by-design`, exit 1.
+
+```bash
+watson claw run --mode desarrollo --tag clase --priority high "preparar clase"
+# … toma el basename del plan generado …
+watson ws approve-plan desarrollo 20260530-130934-plan.md
+watson claw execute --mode desarrollo 20260530-130934-plan.md
+# OpenClaw execution gate
+# Plan: …/workspaces/desarrollo/plans/20260530-130934-plan.md
+# Estado: blocked-by-design
+# Razón: execution runtime no implementado en Beta-0
+```
+
+`watson audit summary` lista los 4 eventos `execute_*` en el catálogo
+fijo, así que el contador queda visible incluso cuando es 0.
+
 ## OpenClaw kill switch
 
 Pausa táctica del usuario sobre OpenClaw. Materializada como un archivo

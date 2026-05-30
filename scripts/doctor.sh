@@ -270,32 +270,44 @@ run_diagnostic() {
         show_tail "$fprio_out"
     fi
 
-    # Plan approval smoke: pending → approve → approved → recent
-    # debe mostrar approved. Si plans/ está vacío (el smoke anterior
-    # falló) saltamos con warn.
+    # Plan approval + execute-gate smoke. Hacemos toda la secuencia
+    # encadenada sobre el mismo plan: pending → execute (debe
+    # bloquear por missing approval) → approve → approved → execute
+    # (debe bloquear por Beta-0 con 'blocked-by-design') → recent
+    # refleja approved → audit summary tiene execute_blocked_beta0.
     smoke_basename=""
     for p in "$plans_dir"/*-plan.md; do
         [ -f "$p" ] || continue
         smoke_basename="$(basename "$p")"
     done
     if [ -z "$smoke_basename" ]; then
-        warn "plan approval smoke omitido (no hay plan en $plans_dir)"
+        warn "plan approval/execute smoke omitido (no hay plan en $plans_dir)"
     else
         ps1_out="$(PATRICK_OS_HOME="$SANDBOX" "$ws_script" plan-status desarrollo "$smoke_basename" 2>&1)"
+        exec1_out="$(PATRICK_OS_HOME="$SANDBOX" "$oc_script" execute --mode desarrollo "$smoke_basename" 2>&1)"
+        exec1_rc=$?
         ap_out="$(PATRICK_OS_HOME="$SANDBOX" "$ws_script" approve-plan desarrollo "$smoke_basename" 2>&1)"
         ap_rc=$?
         ps2_out="$(PATRICK_OS_HOME="$SANDBOX" "$ws_script" plan-status desarrollo "$smoke_basename" 2>&1)"
         rec_after="$(PATRICK_OS_HOME="$SANDBOX" "$ws_script" recent desarrollo 2>&1)"
+        exec2_out="$(PATRICK_OS_HOME="$SANDBOX" "$oc_script" execute --mode desarrollo "$smoke_basename" 2>&1)"
+        exec2_rc=$?
+        # Pre-approval: execute debe haber salido != 0 con mensaje de
+        # approve-plan; post-approval: execute debe salir != 0 con
+        # 'blocked-by-design' (la non-action es por diseño en Beta-0).
         if [ "$ap_rc" -eq 0 ] \
            && echo "$ps1_out"   | grep -q "status=pending" \
            && echo "$ps2_out"   | grep -q "status=approved" \
-           && echo "$rec_after" | grep -q "approved"; then
-            ok "plan approval (pending → approve → approved en recent)"
+           && echo "$rec_after" | grep -q "approved" \
+           && [ "$exec1_rc" -ne 0 ] && echo "$exec1_out" | grep -q "approve-plan" \
+           && [ "$exec2_rc" -ne 0 ] && echo "$exec2_out" | grep -q "blocked-by-design"; then
+            ok "plan approval + execute gate (missing approval → approve → blocked-by-design)"
         else
-            fail "plan approval (ap_rc=$ap_rc)"
+            fail "plan approval/execute (ap_rc=$ap_rc exec1=$exec1_rc exec2=$exec2_rc)"
             show_tail "$ps1_out"
+            show_tail "$exec1_out"
             show_tail "$ps2_out"
-            show_tail "$rec_after"
+            show_tail "$exec2_out"
         fi
     fi
     echo
