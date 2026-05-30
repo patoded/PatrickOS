@@ -29,13 +29,18 @@ echo "PatrickOS Home"
 
 echo
 echo "Estado Watson:"
-# Preferimos delegar en watson.py para que la versión salga del único
-# lugar donde se define (_VERSION). Si no podemos invocarlo, caemos a un
-# texto fijo para no romper el panel.
-if command -v python3 >/dev/null 2>&1 && [ -f "$repo_dir/watson/watson.py" ]; then
+# La versión vive en un único lugar (_VERSION en watson.py). Para
+# instalaciones globales el repo_dir no contiene watson/watson.py, así
+# que probamos primero el binario en PATH (instalación vía install.sh)
+# y caemos al repo solo si watson no está instalado. Llamamos a
+# 'watson version' — NO 'watson inicio' — para no entrar en recursión
+# (inicio invoca este mismo home.sh).
+if command -v watson >/dev/null 2>&1; then
+    watson version 2>/dev/null || echo "Watson CLI (no se pudo leer versión)"
+elif command -v python3 >/dev/null 2>&1 && [ -f "$repo_dir/watson/watson.py" ]; then
     python3 "$repo_dir/watson/watson.py" version 2>/dev/null || echo "Watson CLI (no se pudo leer versión)"
 else
-    echo "Watson CLI (python3/watson.py no disponible)"
+    echo "Watson CLI no disponible"
 fi
 
 echo
