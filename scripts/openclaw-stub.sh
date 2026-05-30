@@ -252,6 +252,18 @@ $tarea
 Dry-run. Nada ejecutado.
 EOF_PLAN
 
+        # Historial: además de last-plan.md, guardamos una copia
+        # inmutable en <workspace>/plans/<timestamp>-plan.md. Mismo
+        # contenido — la sobrescritura de last-plan.md no pierde
+        # nada. Colisiones en el mismo segundo se sobrescriben (sin
+        # contador): Beta-0 prioriza auditabilidad humana sobre
+        # paralelismo. Si dos runs caen al mismo segundo, gana el
+        # último; el audit log igual los registra a ambos.
+        plans_dir="$ws_dir/plans"
+        ts_filename="$(date '+%Y%m%d-%H%M%S')"
+        mkdir -p "$plans_dir"
+        cp "$plan_file" "$plans_dir/${ts_filename}-plan.md"
+
         printf '%s | mode=%s | dry-run | task=%s\n' \
             "$fecha" "$mode" "$tarea" >> "$LOG_FILE"
         audit_log "run_allowed" "$mode" "ok" "$tarea"

@@ -357,6 +357,10 @@ Cada `run` genera/actualiza:
 - `~/.patrick-os/workspaces/<modo>/last-plan.md` — último plan (se
   sobrescribe en cada invocación; si el `KILL_SWITCH` está activo o
   el policy gate falla, **no se escribe nada**).
+- `~/.patrick-os/workspaces/<modo>/plans/<YYYYMMDD-HHMMSS>-plan.md`
+  — copia histórica inmutable del mismo plan. `watson ws plans <modo>`
+  lista los archivos del historial (o `Sin planes.` si todavía no
+  hubo runs en ese modo).
 - `~/.patrick-os/openclaw/openclaw.log` — log append-only,
   `timestamp | mode=... | dry-run | task=...`.
 - `~/.patrick-os/openclaw/audit.log` — bitácora estructurada (ver
