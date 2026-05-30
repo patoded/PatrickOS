@@ -262,7 +262,18 @@ EOF_PLAN
         plans_dir="$ws_dir/plans"
         ts_filename="$(date '+%Y%m%d-%H%M%S')"
         mkdir -p "$plans_dir"
-        cp "$plan_file" "$plans_dir/${ts_filename}-plan.md"
+        plan_basename="${ts_filename}-plan.md"
+        cp "$plan_file" "$plans_dir/$plan_basename"
+
+        # Índice TSV append-only: timestamp \t mode \t filename \t task.
+        # Sanitizamos la tarea de tabs/newlines/CR para no romper el
+        # formato — el resto pasa tal cual. Un parser razonable puede
+        # cortar por tab y, si hay tabs accidentales en el campo final,
+        # rejuntarlos.
+        tarea_clean="$(printf '%s' "$tarea" | tr -d '\t\n\r')"
+        printf '%s\t%s\t%s\t%s\n' \
+            "$ts_filename" "$mode" "$plan_basename" "$tarea_clean" \
+            >> "$plans_dir/index.tsv"
 
         printf '%s | mode=%s | dry-run | task=%s\n' \
             "$fecha" "$mode" "$tarea" >> "$LOG_FILE"
