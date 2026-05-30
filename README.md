@@ -7,7 +7,9 @@ que orquesta el sistema desde la línea de comandos y se apoya en IA local vía
 
 ## Estado
 
-Prototipo en fase **Alpha en preparación** (`v0.2.0-alpha`, ISO pendiente de build).
+`v0.2.0-alpha` publicada (código y docs); ciclo **`v0.3.0-dev`** en
+curso (preparación agéntica segura con OpenClaw Beta-0, sin ejecución
+real). ISO v0.3 postergada por diseño; ver `docs/V0.3_PLAN.md`.
 
 - Watson CLI con modos (consulta, clase, video, desarrollo, IA, preguntar IA),
   más comandos meta: `ayuda`, `version`, `estado`, `sistema`, `validar`,
@@ -108,17 +110,25 @@ Checklist v0.2.0-alpha: [`docs/V0.2_ALPHA_CHECKLIST.md`](docs/V0.2_ALPHA_CHECKLI
 Release notes v0.2.0-alpha: [`docs/RELEASE_NOTES_v0.2.0-alpha.md`](docs/RELEASE_NOTES_v0.2.0-alpha.md).
 Plan v0.3: [`docs/V0.3_PLAN.md`](docs/V0.3_PLAN.md).
 Spec OpenClaw Beta-0: [`docs/OPENCLAW_BETA0_SPEC.md`](docs/OPENCLAW_BETA0_SPEC.md).
+Release notes v0.3.0-alpha: [`docs/RELEASE_NOTES_v0.3.0-alpha.md`](docs/RELEASE_NOTES_v0.3.0-alpha.md).
+Checklist v0.3.0-alpha: [`docs/V0.3_ALPHA_CHECKLIST.md`](docs/V0.3_ALPHA_CHECKLIST.md).
 
-## Validar antes de publicar v0.2.0-alpha
+## Validar antes de publicar
+
+Apuntá `release-checklist.sh` a la versión target. Durante el ciclo
+de desarrollo Watson reporta `vX.Y.Z-dev` mientras el target ya es
+`vX.Y.Z-alpha`; el checklist marca eso como `TODO` (no `FAIL`) y
+recuerda bumpear `_VERSION` al tagear.
 
 ```bash
 make check
-scripts/release-checklist.sh v0.2.0-alpha
+scripts/release-checklist.sh v0.3.0-alpha   # ciclo actual
+scripts/release-checklist.sh v0.2.0-alpha   # release publicada
 ```
 
 `release-checklist.sh` reporta `OK`/`TODO`/`FAIL`: `FAIL` bloquea,
-`TODO` (ej. ISO no construida todavía) es esperado en este punto del
-ciclo. Exit code = nº de FAILs.
+`TODO` (ej. ISO no construida todavía, `_VERSION` aún en `-dev`) es
+esperado durante el ciclo. Exit code = nº de FAILs.
 
 ## Notas rápidas
 
@@ -199,7 +209,7 @@ watson inicio   # alias: i, home, panel
 
 Secciones (todas locales, sin red):
 
-- **Estado Watson:** versión actual (`v0.2.0-alpha`).
+- **Estado Watson:** versión actual (`v0.3.0-dev`).
 - **Sistema:** `hostname`, `uptime -p` (con fallback a `uptime` plano si
   la flag no está soportada), y `free -h` resumida.
 - **Daily:** delega en `daily.sh` si está presente y ejecutable. Si

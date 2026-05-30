@@ -28,10 +28,14 @@ Repositorio principal:
 PatrickOS ya tiene una primera Alpha publicada:
 `v0.1.0-alpha`
 
-Y está en cierre/preparación de:
-`v0.2.0-alpha` — código y docs listos, ISO pendiente de construcción.
-La build de ISO v0.2 se hará en un PR aparte una vez validado el
-checklist (`docs/V0.2_ALPHA_CHECKLIST.md`) y `scripts/release-checklist.sh v0.2.0-alpha`.
+`v0.2.0-alpha` cerró del lado de código y docs. La build de ISO v0.2
+queda como decisión separada (ver `docs/V0.2_ALPHA_CHECKLIST.md` y
+`scripts/release-checklist.sh v0.2.0-alpha`).
+
+Ciclo actual: **`v0.3.0-dev`** — release de **preparación** agéntica
+segura, sin runtime real. Watson reporta `v0.3.0-dev`; el bump a
+`v0.3.0-alpha` se hace cuando el checklist (`docs/V0.3_ALPHA_CHECKLIST.md`)
+quede en verde. ISO v0.3 postergada por diseño.
 
 La Alpha incluye:
 
@@ -287,11 +291,11 @@ Regla: no hacer PR manual desde navegador salvo emergencia.
 
 ## Próximos pasos inmediatos
 
-1. Terminar y mergear PR de `watson inicio/home` si aún no está mergeado.
-2. Guardar este contexto en `docs/PROJECT_CONTEXT.md`.
-3. Preparar checklist de `v0.2.0-alpha`.
-4. Reconstruir ISO v0.2.0-alpha solo cuando Watson tenga suficiente valor añadido.
-5. Después explorar OpenClaw runtime real con aislamiento, whitelist y sin ejecución libre.
+1. Cerrar PRs abiertos del ciclo `v0.3.0-dev` (workspace, doctor, doctor repair, install-validate).
+2. Mantener `make check` y `watson doctor` en verde por PR.
+3. Cuando el checklist `docs/V0.3_ALPHA_CHECKLIST.md` esté completo, bumpear `_VERSION` a `v0.3.0-alpha` y tagear.
+4. Decidir si la ISO v0.3 se construye al cierre o se posterga (default: postergar).
+5. Recién después abrir Beta-1 de OpenClaw (primera herramienta whitelisted, todavía sin red ni sudo).
 
 ## Próximo foco: v0.3 / OpenClaw Beta-0
 

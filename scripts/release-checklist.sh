@@ -54,9 +54,22 @@ fi
 
 # 2) Watson reporta la versión esperada. Si se llamó sin arg, esto es
 #    una tautología, pero igual lo mostramos para que quede en el log.
+#    Caso intermedio: durante el ciclo de desarrollo de un alpha, _VERSION
+#    suele ser "vX.Y.Z-dev" mientras el target ya es "vX.Y.Z-alpha". Eso
+#    no es una falla — marcamos TODO ("bumpeá _VERSION cuando estés
+#    listo a tagear") para que el operador no se trabe.
+dev_of() {
+    # "v0.3.0-alpha" -> "v0.3.0-dev"
+    case "$1" in
+        *-alpha) echo "${1%-alpha}-dev" ;;
+        *)       echo "" ;;
+    esac
+}
 if [ -n "$watson_version" ]; then
     if [ "$watson_version" = "$target_version" ]; then
         ok "watson version = $watson_version"
+    elif [ "$watson_version" = "$(dev_of "$target_version")" ]; then
+        todo "watson version = '$watson_version' (ciclo de desarrollo de '$target_version'); bumpeá _VERSION en watson/watson.py al tagear"
     else
         fail "watson version = '$watson_version' (esperado: '$target_version'); actualizar _VERSION en watson/watson.py"
     fi
@@ -72,21 +85,20 @@ else
     fail "release notes faltantes: $notes"
 fi
 
-# 4) Checklist v0.2 (mientras el target sea v0.2.x, esperamos este doc).
-checklist="$repo_dir/docs/V0.2_ALPHA_CHECKLIST.md"
+# 4) Checklist por familia de versión (v0.2 → V0.2_ALPHA_CHECKLIST.md,
+#    v0.3 → V0.3_ALPHA_CHECKLIST.md, etc.).
 case "$target_version" in
-    v0.2.*)
-        if [ -f "$checklist" ]; then
-            ok "checklist v0.2: $checklist"
-        else
-            fail "checklist faltante: $checklist"
-        fi
-        ;;
-    *)
-        # Para versiones futuras no exigimos este archivo específico.
-        :
-        ;;
+    v0.2.*) checklist="$repo_dir/docs/V0.2_ALPHA_CHECKLIST.md" ;;
+    v0.3.*) checklist="$repo_dir/docs/V0.3_ALPHA_CHECKLIST.md" ;;
+    *)      checklist="" ;;
 esac
+if [ -n "$checklist" ]; then
+    if [ -f "$checklist" ]; then
+        ok "checklist: $checklist"
+    else
+        fail "checklist faltante: $checklist"
+    fi
+fi
 
 # 5) Contexto operativo.
 ctx="$repo_dir/docs/PROJECT_CONTEXT.md"
