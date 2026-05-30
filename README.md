@@ -33,10 +33,24 @@ bash scripts/setup-dev.sh
 # Correr Watson desde el repo.
 make watson
 
-# O instalarlo como comando del sistema.
-make install
-watson
+# O instalarlo como comando del sistema y verificar la instalación.
+sudo bash scripts/install.sh
+make check-installed
+watson inicio
 ```
+
+`install.sh` copia `watson.py` a `/usr/local/bin/watson`, los `scripts/*.sh`
+a `/usr/local/share/patrick-os/scripts/`, los `docs/*.md` a
+`/usr/local/share/patrick-os/docs/`, y al final corre una verificación
+post-install que aborta con exit 1 si la versión instalada difiere de
+la del repo o si falta algún script crítico (`home.sh`, `daily.sh`,
+`notes.sh`, `todos.sh`, `workspace.sh`, `openclaw-stub.sh`,
+`validate-system.sh`).
+
+`make check-installed` re-ejecuta esa verificación en cualquier momento
+sin sudo. Compara versión y hace `cmp` byte-a-byte de cada script
+crítico y de los docs clave (`README.md`, `ARCHITECTURE.md`,
+`PROJECT_CONTEXT.md`) contra el repo. Si algo difiere, sugiere reinstalar.
 
 ## Flujo rápido de desarrollo
 
