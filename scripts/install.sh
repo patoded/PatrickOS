@@ -17,6 +17,13 @@ BIN_DIR="/usr/local/bin"
 SHARE_DIR="/usr/local/share/patrick-os"
 SCRIPTS_DEST="$SHARE_DIR/scripts"
 DOCS_DEST="$SHARE_DIR/docs"
+CONFIGS_DEST="$SHARE_DIR/configs"
+
+# Configs cuya ausencia tras instalar es bug: openclaw-stub.sh aborta
+# si no encuentra la policy, así que mejor verificarlo aquí.
+CRITICAL_CONFIGS=(
+    openclaw-policy.yaml
+)
 
 # Scripts cuya ausencia tras instalar es bug crítico: backend de comandos
 # Watson que el usuario va a invocar de inmediato.
@@ -49,6 +56,7 @@ echo "Instalando Watson desde:  $repo_dir"
 echo "Destino binario:          $BIN_DIR/watson"
 echo "Destino scripts:          $SCRIPTS_DEST"
 echo "Destino docs:             $DOCS_DEST"
+echo "Destino configs:          $CONFIGS_DEST"
 echo
 
 # 1) Copiar watson.py a /usr/local/bin/watson con permisos ejecutables.
@@ -64,6 +72,11 @@ install -m 0755 "$repo_dir/scripts/"*.sh "$SCRIPTS_DEST/"
 # refleje el repo.
 mkdir -p "$DOCS_DEST"
 install -m 0644 "$repo_dir/docs/"*.md "$DOCS_DEST/"
+
+# 3b) Copiar configs/*.yaml. Hoy solo openclaw-policy.yaml; cuando
+# aparezcan más se incluyen sin tocar este código.
+mkdir -p "$CONFIGS_DEST"
+install -m 0644 "$repo_dir/configs/"*.yaml "$CONFIGS_DEST/"
 
 # 4) Ajustar el SCRIPTS_DIR por defecto en la copia instalada.
 # El watson original busca '../scripts' relativo a __file__; tras instalar a
@@ -114,6 +127,16 @@ for s in "${CRITICAL_SCRIPTS[@]}"; do
         report_fail "$dst no es ejecutable"
     else
         report_ok "$s instalado (+x)"
+    fi
+done
+
+# Configs críticos: existen en el destino (no se exige +x, son data).
+for c in "${CRITICAL_CONFIGS[@]}"; do
+    dst="$CONFIGS_DEST/$c"
+    if [ ! -f "$dst" ]; then
+        report_fail "$dst no existe"
+    else
+        report_ok "$c instalado"
     fi
 done
 

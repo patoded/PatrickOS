@@ -25,6 +25,7 @@ _ALIAS_MAP = {
     "claw": "openclaw",
     "ws": "workspace",
     "doc": "doctor",
+    "pol": "policy",
     "n": "nota",
     "ns": "notas",
     "note": "nota",
@@ -53,6 +54,7 @@ _PAYLOAD_PREFIXES = (
     "workspace",
     "openclaw",
     "doctor",
+    "policy",
     "note",
     "nota",
     "todo",
@@ -60,6 +62,7 @@ _PAYLOAD_PREFIXES = (
     "claw",
     "ask",
     "doc",
+    "pol",
     "ws",
     "n",
     "t",
@@ -110,6 +113,9 @@ def mostrar_ayuda():
     print("  inicio (i, home, panel)    panel rápido WatsonOS (estado + daily + atajos)")
     print("  doctor (doc)               diagnóstico integral (repo + global + smokes)")
     print("  doctor repair              diagnóstico + sudo install + re-check")
+    print("  policy (pol)               muestra/valida configs/openclaw-policy.yaml")
+    print("  policy check               valida invariantes seguras (red/sudo/plugins/...)")
+    print("  claw policy                idem, vía openclaw-stub")
     print("  modo consulta              flujo clínico")
     print("  modo clase                 flujo docente")
     print("  modo video                 flujo de edición")
@@ -127,6 +133,7 @@ def mostrar_ayuda():
     print("  watson ws path desarrollo")
     print("  watson doctor")
     print("  watson doctor repair")
+    print("  watson policy check")
 
 
 def mostrar_version():
@@ -210,6 +217,18 @@ def ejecutar_comando(comando, pregunta=None):
         else:
             args = pregunta.split()
             ejecutar_seguro([script, *args], f"openclaw-stub.sh {args[0]}")
+
+    elif comando == "policy":
+        # Capa de policy local de OpenClaw. Sin args = show (lectura
+        # rápida de qué tenemos); con args ('show', 'path', 'check')
+        # se forwardean al script. 'check' es el gate que usa
+        # openclaw-stub.sh antes de cada run.
+        script = str(SCRIPTS_DIR / "openclaw-policy.sh")
+        if pregunta is None or not pregunta.strip():
+            ejecutar_seguro([script, "show"], "openclaw-policy.sh show")
+        else:
+            args = pregunta.split()
+            ejecutar_seguro([script, *args], f"openclaw-policy.sh {args[0]}")
 
     elif comando == "doctor":
         # Sin payload = diagnóstico puro. Con payload ("repair" /

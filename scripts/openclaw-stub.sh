@@ -60,6 +60,17 @@ case "$cmd" in
         print_status
         exit 0
         ;;
+    policy)
+        # Delegar en openclaw-policy.sh. Cualquier arg extra se pasa
+        # ('show' por default si no hay nada). Mantenemos el script
+        # de policy al lado nuestro (mismo dir).
+        pol_script="$(dirname "$0")/openclaw-policy.sh"
+        if [ ! -x "$pol_script" ]; then
+            echo "Error: openclaw-policy.sh no presente en $(dirname "$0")." >&2
+            exit 1
+        fi
+        exec "$pol_script" "$@"
+        ;;
     run)
         mode="desarrollo"
         # --mode opcional debe ir antes del texto libre.
@@ -89,6 +100,22 @@ case "$cmd" in
             exit 1
         fi
 
+        # Policy gate: si la policy local permite algo inseguro (red,
+        # sudo, plugins, marketplace, whitelist no vacía, kill switch
+        # off) abortamos antes de tocar nada. Mantenemos el dry-run
+        # honesto: ningún plan se escribe si las invariantes no se
+        # cumplen.
+        pol_script="$(dirname "$0")/openclaw-policy.sh"
+        if [ -x "$pol_script" ]; then
+            if ! "$pol_script" check >/dev/null 2>&1; then
+                echo "Error: policy check falló. Corré '$pol_script check' para ver el detalle." >&2
+                exit 1
+            fi
+        else
+            echo "Error: openclaw-policy.sh no presente en $(dirname "$0"); no puedo ejecutar dry-run sin policy gate." >&2
+            exit 1
+        fi
+
         ws_dir="$WORKSPACES_DIR/$mode"
         plan_file="$ws_dir/last-plan.md"
         mkdir -p "$LOG_DIR"
@@ -114,6 +141,9 @@ Tarea: $tarea
 Herramientas permitidas: ninguna
 Red: deshabilitada
 Sudo: deshabilitado
+Policy: OK
+Tool whitelist: empty
+Kill switch: enabled
 Estado: dry-run, nada ejecutado
 EOF_PLAN
 

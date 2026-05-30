@@ -17,6 +17,7 @@ BIN_DIR="/usr/local/bin"
 SHARE_DIR="/usr/local/share/patrick-os"
 SCRIPTS_DEST="$SHARE_DIR/scripts"
 DOCS_DEST="$SHARE_DIR/docs"
+CONFIGS_DEST="$SHARE_DIR/configs"
 
 CRITICAL_SCRIPTS=(
     home.sh
@@ -25,6 +26,7 @@ CRITICAL_SCRIPTS=(
     todos.sh
     workspace.sh
     openclaw-stub.sh
+    openclaw-policy.sh
     validate-system.sh
     doctor.sh
 )
@@ -37,6 +39,11 @@ CRITICAL_DOCS=(
     README.md
     ARCHITECTURE.md
     PROJECT_CONTEXT.md
+)
+
+# Configs cuya presencia post-install es contrato (los lee el runtime).
+CRITICAL_CONFIGS=(
+    openclaw-policy.yaml
 )
 
 script_dir="$(cd "$(dirname "$0")" && pwd)"
@@ -128,6 +135,30 @@ for d in "${CRITICAL_DOCS[@]}"; do
         continue
     fi
     ok "doc en sync: $d"
+done
+
+# 5) Configs críticos: existen y coinciden con el repo.
+if [ ! -d "$CONFIGS_DEST" ]; then
+    report_fail "$CONFIGS_DEST no existe"
+else
+    ok "configs dir presente: $CONFIGS_DEST"
+fi
+for c in "${CRITICAL_CONFIGS[@]}"; do
+    src="$repo_dir/configs/$c"
+    dst="$CONFIGS_DEST/$c"
+    if [ ! -f "$dst" ]; then
+        report_fail "config ausente: $dst"
+        continue
+    fi
+    if [ ! -f "$src" ]; then
+        report_fail "config faltante en el repo: $src"
+        continue
+    fi
+    if ! cmp -s "$src" "$dst"; then
+        report_fail "config desactualizado: $dst (≠ $src)"
+        continue
+    fi
+    ok "config en sync: $c"
 done
 
 echo

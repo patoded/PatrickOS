@@ -179,6 +179,36 @@ else
     warn "doctor.sh ausente: $doctor_script"
 fi
 
+# 14) openclaw-policy.sh presente y ejecutable (gate de OpenClaw).
+policy_script="$scripts_dir/openclaw-policy.sh"
+if [ -f "$policy_script" ]; then
+    if [ -x "$policy_script" ]; then
+        ok "openclaw-policy.sh presente y ejecutable: $policy_script"
+    else
+        warn "openclaw-policy.sh presente pero no ejecutable: $policy_script (chmod +x)"
+    fi
+else
+    warn "openclaw-policy.sh ausente: $policy_script"
+fi
+
+# 15) configs/openclaw-policy.yaml presente. Como con scripts_dir,
+# probamos primero $PATRICK_OS_CONFIGS, después /usr/local/share/... y
+# después ../configs respecto a scripts_dir (modo repo).
+configs_dir="${PATRICK_OS_CONFIGS:-}"
+if [ -z "$configs_dir" ]; then
+    if [ -d "/usr/local/share/patrick-os/configs" ]; then
+        configs_dir="/usr/local/share/patrick-os/configs"
+    elif [ -d "$(dirname "$scripts_dir")/configs" ]; then
+        configs_dir="$(dirname "$scripts_dir")/configs"
+    fi
+fi
+policy_yaml="$configs_dir/openclaw-policy.yaml"
+if [ -n "$configs_dir" ] && [ -f "$policy_yaml" ]; then
+    ok "openclaw policy yaml presente: $policy_yaml"
+else
+    warn "openclaw policy yaml ausente (configs_dir='${configs_dir:-?}')"
+fi
+
 echo
 echo "Resumen: WARN=$warn_count FAIL=$fail_count"
 exit "$fail_count"
