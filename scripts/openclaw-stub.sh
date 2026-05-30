@@ -70,6 +70,7 @@ Uso:
   openclaw-stub.sh kill ["razón"]
   openclaw-stub.sh unkill
   openclaw-stub.sh policy [show|path|check]
+  openclaw-stub.sh negative-tests [--verbose]
 
 Modos permitidos: consulta, clase, video, desarrollo (default), ia, general
 Priority permitidas: low, normal (default), high
@@ -137,6 +138,18 @@ case "$cmd" in
         fi
         audit_log "policy" "-" "info" "${1:-show}"
         exec "$pol_script" "$@"
+        ;;
+    negative-tests)
+        # Delegar en openclaw-negative-tests.sh (mismo dir). Cualquier
+        # arg extra (ej. --verbose) se forwardea. Sin auditoría
+        # específica acá — el runner corre los gates reales y cada
+        # gate audita lo suyo.
+        nt_script="$(dirname "$0")/openclaw-negative-tests.sh"
+        if [ ! -x "$nt_script" ]; then
+            echo "Error: openclaw-negative-tests.sh no presente en $(dirname "$0")." >&2
+            exit 1
+        fi
+        exec "$nt_script" "$@"
         ;;
     run)
         mode="desarrollo"

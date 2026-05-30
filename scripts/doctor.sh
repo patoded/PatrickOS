@@ -356,6 +356,47 @@ run_diagnostic() {
     fi
     echo
 
+    # 10) Contracts smoke. openclaw-contracts.sh check valida los
+    # invariantes baseline (version, default_state) y reporta
+    # registry disabled/empty cuando Beta-0 está sano.
+    echo "--- contracts smoke ---"
+    contracts_script="$script_dir/openclaw-contracts.sh"
+    if [ ! -x "$contracts_script" ]; then
+        warn "openclaw-contracts.sh no presente o sin +x en $script_dir"
+    else
+        ctr_out="$("$contracts_script" check 2>&1)"
+        ctr_rc=$?
+        if [ "$ctr_rc" -eq 0 ]; then
+            ok "contracts check OK (registry disabled/empty o contratos válidos)"
+        else
+            fail "contracts check (exit=$ctr_rc)"
+            show_tail "$ctr_out"
+        fi
+    fi
+    echo
+
+    # 11) Negative tests smoke. La suite verifica que cada gate
+    # bloquea su escenario malicioso. FAIL=0 = todos los gates
+    # comportándose como contrato.
+    echo "--- negative tests smoke ---"
+    nt_script="$script_dir/openclaw-negative-tests.sh"
+    if [ ! -x "$nt_script" ]; then
+        warn "openclaw-negative-tests.sh no presente o sin +x en $script_dir"
+    else
+        # Sandbox propio del runner (PATRICK_OS_HOME no override acá);
+        # NO contamina /tmp/patrick-doctor.
+        nt_out="$("$nt_script" 2>&1)"
+        nt_rc=$?
+        if [ "$nt_rc" -eq 0 ]; then
+            nt_summary=$(echo "$nt_out" | grep '^Resumen:' | tail -1)
+            ok "negative tests OK ($nt_summary)"
+        else
+            fail "negative tests (exit=$nt_rc = nº de FAILs)"
+            show_tail "$nt_out"
+        fi
+    fi
+    echo
+
     echo "Resumen: OK=$ok_count WARN=$warn_count FAIL=$fail_count"
 }
 

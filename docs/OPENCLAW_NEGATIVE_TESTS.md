@@ -138,3 +138,29 @@ disparar, el evento de audit esperado, y el resultado esperado.
 - Cada vez que aparezca una nueva clase de amenaza no listada
   acá, se actualiza este documento en el mismo PR del control
   que la mitiga.
+
+## Automatización actual
+
+A partir de v0.4 hay un runner automático sobre los gates de
+Beta-0; cubre items 1, 2, 3, 4 (execute aprobado → blocked-by-design),
+5, 6 (tag inválido), 7 (priority inválida), 8 (tools vacío),
+9 (path traversal en execute), 10 (modo inválido), 11 (policy
+sana), y 12 (viewer del registry). Los items 7-11 del catálogo
+(sandbox, sudo, red, shell libre, modificar policy, plugin
+externo) siguen documentados — quedan para Beta-1 cuando el
+sandbox de proceso esté en código.
+
+```bash
+scripts/openclaw-negative-tests.sh        # runner directo
+scripts/openclaw-negative-tests.sh --verbose   # con detalle por test
+watson negative-tests                     # alias: nt, negtest
+watson claw negative-tests                # vía openclaw-stub
+make negative-tests                       # target del Makefile
+make safety-check                         # combo: check + policy + tools + contracts + nt + doctor
+```
+
+El runner usa sandbox dedicado en `/tmp/patrick-negative-tests`
+(borrado y recreado al inicio); nunca toca `~/.patrick-os` salvo
+que el usuario setee `PATRICK_OS_HOME` externamente. Exit code =
+nº de FAILs. `watson doctor` levanta este runner como parte del
+smoke `--- negative tests smoke ---`.

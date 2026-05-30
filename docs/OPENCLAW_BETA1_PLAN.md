@@ -1,9 +1,18 @@
 # OpenClaw Beta-1 Plan
 
-Estado: **propuesta**. Beta-1 todavía no está en código y este
-documento es el plan de cómo llegar. **OpenClaw runtime real
-sigue NO implementado.** Nada de lo descrito acá se prende sin
-que cada fase pase por su propio PR.
+Estado: **propuesta + safety foundation v0.4 en curso**. Beta-1
+todavía no está en código y este documento es el plan de cómo
+llegar. **OpenClaw runtime real sigue NO implementado.** Nada de
+lo descrito acá se prende sin que cada fase pase por su propio PR.
+
+v0.4 abre con la **safety foundation**: validador de contratos
+(`scripts/openclaw-contracts.sh`), runner de pruebas negativas
+(`scripts/openclaw-negative-tests.sh`), target `make safety-check`
+y smokes nuevos en `watson doctor` (`contracts smoke` + `negative
+tests smoke`). Ambos son prerequisitos antes de habilitar la
+primera herramienta real: no se evalúa ninguna fase de runtime sin
+que el contracts validator pase y la suite negativa termine en
+FAIL=0.
 
 Documentos hermanos:
 

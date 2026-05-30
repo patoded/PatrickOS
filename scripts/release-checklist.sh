@@ -144,6 +144,17 @@ case "$target_version" in
                 fail "doc OpenClaw faltante: docs/$f"
             fi
         done
+        # Scripts nuevos del safety foundation (Beta-1 prerequisites).
+        # No se exigen +x acá — eso lo destapa check-installed.
+        for s in openclaw-contracts.sh openclaw-negative-tests.sh; do
+            if [ -f "$repo_dir/scripts/$s" ]; then
+                ok "script OpenClaw v0.4: scripts/$s"
+            else
+                fail "script OpenClaw v0.4 faltante: scripts/$s"
+            fi
+        done
+        # Recordatorio operativo (no es un check, solo hint).
+        todo "validación obligatoria sugerida antes de tagear: make safety-check"
         ;;
 esac
 
