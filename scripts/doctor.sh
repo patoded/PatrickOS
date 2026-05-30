@@ -336,6 +336,26 @@ run_diagnostic() {
     fi
     echo
 
+    # 9) Tool registry smoke. En Beta-0 el viewer debe responder
+    # 'No hay herramientas habilitadas.' — cualquier otra cosa
+    # significa que el YAML cambió a algo no-Beta-0 y se detecta acá
+    # además del policy check.
+    echo "--- tool registry smoke ---"
+    tools_script="$script_dir/openclaw-tools.sh"
+    if [ ! -x "$tools_script" ]; then
+        warn "openclaw-tools.sh no presente o sin +x en $script_dir"
+    else
+        tls_out="$("$tools_script" list 2>&1)"
+        tls_rc=$?
+        if [ "$tls_rc" -eq 0 ] && echo "$tls_out" | grep -q "No hay herramientas habilitadas."; then
+            ok "tool registry: Beta-0 vacío/deshabilitado"
+        else
+            fail "tool registry (rc=$tls_rc)"
+            show_tail "$tls_out"
+        fi
+    fi
+    echo
+
     echo "Resumen: OK=$ok_count WARN=$warn_count FAIL=$fail_count"
 }
 

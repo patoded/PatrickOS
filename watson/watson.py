@@ -27,6 +27,7 @@ _ALIAS_MAP = {
     "doc": "doctor",
     "pol": "policy",
     "aud": "audit",
+    "tls": "tools",
     "n": "nota",
     "ns": "notas",
     "note": "nota",
@@ -57,6 +58,7 @@ _PAYLOAD_PREFIXES = (
     "doctor",
     "policy",
     "audit",
+    "tools",
     "note",
     "nota",
     "todo",
@@ -66,6 +68,7 @@ _PAYLOAD_PREFIXES = (
     "doc",
     "pol",
     "aud",
+    "tls",
     "ws",
     "n",
     "t",
@@ -136,6 +139,7 @@ def mostrar_ayuda():
     print("  claw unkill                desactiva el kill switch")
     print("  claw status                muestra estado del runtime + kill switch")
     print("  audit (aud) [list|tail|path] lectura del audit log estructurado de OpenClaw")
+    print("  tools (tls) [list|show|path] viewer del registry de herramientas (Beta-0: vacío)")
     print("  modo consulta              flujo clínico")
     print("  modo clase                 flujo docente")
     print("  modo video                 flujo de edición")
@@ -169,6 +173,7 @@ def mostrar_ayuda():
     print("  watson claw kill \"pausa de seguridad\"")
     print("  watson claw unkill")
     print("  watson audit tail")
+    print("  watson tools list")
 
 
 def mostrar_version():
@@ -263,6 +268,17 @@ def ejecutar_comando(comando, pregunta=None):
         else:
             args = pregunta.split()
             ejecutar_seguro([script, *args], f"openclaw-audit.sh {args[0]}")
+
+    elif comando == "tools":
+        # Viewer read-only del tool registry. Sin args = list ('Beta-0
+        # no hay herramientas'); con args ('path', 'show', 'list') se
+        # forwardea al script. NO ejecuta herramientas.
+        script = str(SCRIPTS_DIR / "openclaw-tools.sh")
+        if pregunta is None or not pregunta.strip():
+            ejecutar_seguro([script, "list"], "openclaw-tools.sh list")
+        else:
+            args = pregunta.split()
+            ejecutar_seguro([script, *args], f"openclaw-tools.sh {args[0]}")
 
     elif comando == "policy":
         # Capa de policy local de OpenClaw. Sin args = show (lectura

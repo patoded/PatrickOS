@@ -255,6 +255,26 @@ respetan). `clean --yes` borra todo el contenido y recrea el README;
 sin `--yes` solo imprime cómo confirmar y sale en 1. Sandbox vía
 `PATRICK_OS_HOME=/tmp/...` (mismo override que usa `claw`).
 
+## OpenClaw tools registry
+
+Viewer read-only de `configs/openclaw-tools.yaml`, el registry que
+define qué herramientas tendría permitido invocar OpenClaw. **En Beta-0
+está vacío y deshabilitado por contrato** (`tools: []`,
+`default_state: disabled`); ninguna herramienta se ejecuta.
+
+```bash
+watson tools           # alias: tls — equivalente a 'tools list'
+watson tools list      # "No hay herramientas habilitadas."
+watson tools show      # imprime el YAML completo
+watson tools path      # imprime ruta del archivo
+```
+
+`policy check` ya valida que el registry esté en estado Beta-0; el
+viewer es un atajo para leerlo sin recordar el path. Habilitar una
+herramienta requiere PR explícito que actualice también
+[`OPENCLAW_TOOL_CONTRACTS.md`](docs/OPENCLAW_TOOL_CONTRACTS.md) y
+[`OPENCLAW_SAFETY_MODEL.md`](docs/OPENCLAW_SAFETY_MODEL.md).
+
 ## OpenClaw audit log
 
 Bitácora estructurada y append-only de eventos de OpenClaw (status,
