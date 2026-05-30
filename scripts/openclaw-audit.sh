@@ -57,6 +57,8 @@ case "$cmd" in
         # con set -u.
         for ev in kill unkill run_allowed run_blocked_kill_switch \
                   run_blocked_policy run_invalid_mode run_empty_task \
+                  execute_blocked_beta0 execute_blocked_kill_switch \
+                  execute_blocked_policy execute_missing_approval \
                   status policy; do
             n=$(grep -cF "| event=$ev |" "$AUDIT_FILE")
             echo "event=$ev count=$n"

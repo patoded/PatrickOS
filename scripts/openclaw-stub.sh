@@ -66,6 +66,7 @@ usage() {
 Uso:
   openclaw-stub.sh status
   openclaw-stub.sh run [--mode <modo>] [--tag <tag>] [--priority <low|normal|high>] "tarea"
+  openclaw-stub.sh execute --mode <modo> <filename>
   openclaw-stub.sh kill ["razón"]
   openclaw-stub.sh unkill
   openclaw-stub.sh policy [show|path|check]
@@ -328,6 +329,97 @@ EOF_PLAN
         echo "Plan: $plan_file"
         echo "Estado: dry-run, nada ejecutado"
         exit 0
+        ;;
+    execute)
+        # Placeholder de Beta-0: corre la cadena de gates (kill switch,
+        # policy, aprobación local) y, si todo pasa, igual aborta con
+        # 'blocked-by-design'. NO ejecuta herramientas reales: el
+        # runtime de ejecución no existe en Beta-0. Esto deja el
+        # flujo de seguridad probado para cuando Beta-1 lo prenda.
+        mode="desarrollo"
+        while [ "$#" -gt 0 ]; do
+            case "${1:-}" in
+                --mode)
+                    shift || true
+                    if [ -z "${1:-}" ] || [[ "${1:-}" == --* ]]; then
+                        echo "Error: --mode requiere un valor." >&2; usage >&2; exit 1
+                    fi
+                    mode="$1"; shift || true
+                    ;;
+                *)
+                    break
+                    ;;
+            esac
+        done
+        file="${1:-}"
+        # Validación de basename: mismo criterio que show-plan /
+        # approve-plan. Si vacío o con '/' o '..' → exit 1 antes de
+        # tocar el FS.
+        case "$file" in
+            ""|*/*|*..*)
+                echo "Error: filename inválido (solo basename, sin '/' ni '..'): '${file:-}'" >&2
+                exit 1
+                ;;
+        esac
+        if ! mode_allowed "$mode"; then
+            echo "Error: modo '$mode' no permitido." >&2
+            echo "Modos permitidos: ${ALLOWED_MODES[*]}" >&2
+            exit 1
+        fi
+
+        ws_dir="$WORKSPACES_DIR/$mode"
+        plan_file="$ws_dir/plans/$file"
+        if [ ! -f "$plan_file" ]; then
+            echo "Error: plan no encontrado: $plan_file" >&2
+            exit 1
+        fi
+
+        # 1) Kill switch: el override táctico gana sobre todo.
+        if [ -f "$KILL_SWITCH" ]; then
+            audit_log "execute_blocked_kill_switch" "$mode" "blocked" "$file"
+            echo "OpenClaw bloqueado por KILL_SWITCH" >&2
+            echo "Archivo: $KILL_SWITCH" >&2
+            exit 1
+        fi
+
+        # 2) Policy gate.
+        pol_script="$(dirname "$0")/openclaw-policy.sh"
+        if [ -x "$pol_script" ]; then
+            if ! "$pol_script" check >/dev/null 2>&1; then
+                audit_log "execute_blocked_policy" "$mode" "blocked" "$file"
+                echo "Error: policy check falló. Corré '$pol_script check' para ver el detalle." >&2
+                exit 1
+            fi
+        else
+            audit_log "execute_blocked_policy" "$mode" "blocked" "openclaw-policy.sh ausente"
+            echo "Error: openclaw-policy.sh no presente; no puedo correr el execution gate sin policy." >&2
+            exit 1
+        fi
+
+        # 3) Aprobación local. El plan tiene que tener un sidecar
+        # <file>.state con 'status=approved' exacto. Si está pending
+        # o rejected, no avanzamos.
+        state_file="${plan_file}.state"
+        approved=0
+        if [ -f "$state_file" ] && grep -q "^status=approved$" "$state_file"; then
+            approved=1
+        fi
+        if [ "$approved" -ne 1 ]; then
+            audit_log "execute_missing_approval" "$mode" "blocked" "$file"
+            echo "Plan no aprobado. Usa: watson ws approve-plan $mode $file" >&2
+            exit 1
+        fi
+
+        # Todos los gates pasan. En Beta-0 igual bloqueamos: no hay
+        # runtime real. Exit 1 para mantener consistencia con los
+        # demás bloqueos (un script que encadene execute && next no
+        # debe asumir que se ejecutó nada).
+        audit_log "execute_blocked_beta0" "$mode" "blocked" "$file"
+        echo "OpenClaw execution gate"
+        echo "Plan: $plan_file"
+        echo "Estado: blocked-by-design"
+        echo "Razón: execution runtime no implementado en Beta-0"
+        exit 1
         ;;
     *)
         echo "Subcomando desconocido: $cmd" >&2
