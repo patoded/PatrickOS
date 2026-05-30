@@ -361,6 +361,16 @@ Cada `run` genera/actualiza:
   — copia histórica inmutable del mismo plan. `watson ws plans <modo>`
   lista los archivos del historial (o `Sin planes.` si todavía no
   hubo runs en ese modo).
+- Visualización rápida sin abrir editor:
+
+  ```bash
+  watson ws last-plan desarrollo                  # imprime last-plan.md
+  watson ws show-plan desarrollo latest           # equivalente
+  watson ws show-plan desarrollo 20260530-123208-plan.md
+  ```
+
+  `show-plan` solo acepta **basename** dentro de `<workspace>/plans/`;
+  paths con `/` o `..` se rechazan con exit 1.
 - `~/.patrick-os/openclaw/openclaw.log` — log append-only,
   `timestamp | mode=... | dry-run | task=...`.
 - `~/.patrick-os/openclaw/audit.log` — bitácora estructurada (ver

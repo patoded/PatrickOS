@@ -29,6 +29,8 @@ Uso:
   workspace.sh clean <modo> [--yes]
   workspace.sh path <modo>
   workspace.sh plans <modo>
+  workspace.sh last-plan <modo>
+  workspace.sh show-plan <modo> <archivo|latest>
 
 Modos permitidos: consulta, clase, video, desarrollo, ia, general
 EOF
@@ -147,6 +149,46 @@ case "$cmd" in
         if [ "$found" -eq 0 ]; then
             echo "Sin planes."
         fi
+        ;;
+    last-plan)
+        mode="${1:-}"
+        require_mode "$mode"
+        plan="$WORKSPACES_DIR/$mode/last-plan.md"
+        if [ ! -f "$plan" ]; then
+            echo "Sin last-plan."
+            exit 0
+        fi
+        cat "$plan"
+        ;;
+    show-plan)
+        mode="${1:-}"
+        require_mode "$mode"
+        shift || true
+        target="${1:-}"
+        if [ -z "$target" ]; then
+            echo "Error: falta archivo. Uso: workspace.sh show-plan <modo> <archivo|latest>" >&2
+            exit 1
+        fi
+        ws_dir="$WORKSPACES_DIR/$mode"
+        if [ "$target" = "latest" ]; then
+            plan="$ws_dir/last-plan.md"
+        else
+            # Solo basename. Sin '/', sin '..' — no permitimos path
+            # traversal ni rutas absolutas, así show-plan no puede leer
+            # nada fuera de <workspace>/plans/.
+            case "$target" in
+                */*|*..*)
+                    echo "Error: solo se permite basename (sin '/' ni '..'): '$target'" >&2
+                    exit 1
+                    ;;
+            esac
+            plan="$ws_dir/plans/$target"
+        fi
+        if [ ! -f "$plan" ]; then
+            echo "Error: plan no encontrado: $plan" >&2
+            exit 1
+        fi
+        cat "$plan"
         ;;
     "")
         usage >&2

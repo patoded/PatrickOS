@@ -209,6 +209,22 @@ run_diagnostic() {
         fail "openclaw dry-run (exit=$oc_rc last-plan=$plan_state historial=$plan_count)"
         show_tail "$oc_out"
     fi
+
+    # Plan viewer smoke: 'ws last-plan' y 'ws show-plan latest' tienen
+    # que imprimir el plan recién generado. Verificamos contra el
+    # marcador del header para no caer en falsos positivos.
+    lp_out="$(PATRICK_OS_HOME="$SANDBOX" "$ws_script" last-plan desarrollo 2>&1)"
+    lp_rc=$?
+    sp_out="$(PATRICK_OS_HOME="$SANDBOX" "$ws_script" show-plan desarrollo latest 2>&1)"
+    sp_rc=$?
+    if [ "$lp_rc" -eq 0 ] && [ "$sp_rc" -eq 0 ] \
+       && echo "$lp_out" | grep -q "OpenClaw Dry Run Plan" \
+       && echo "$sp_out" | grep -q "OpenClaw Dry Run Plan"; then
+        ok "plan viewer (last-plan + show-plan latest)"
+    else
+        fail "plan viewer (last-plan rc=$lp_rc, show-plan rc=$sp_rc)"
+        show_tail "$lp_out"
+    fi
     echo
 
     # 8) Audit smoke. El smoke anterior debería haber escrito al
