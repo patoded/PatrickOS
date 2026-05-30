@@ -28,6 +28,7 @@ Uso:
   workspace.sh init <modo>
   workspace.sh clean <modo> [--yes]
   workspace.sh path <modo>
+  workspace.sh plans <modo>
 
 Modos permitidos: consulta, clase, video, desarrollo, ia, general
 EOF
@@ -126,6 +127,26 @@ case "$cmd" in
         mode="${1:-}"
         require_mode "$mode"
         echo "$WORKSPACES_DIR/$mode"
+        ;;
+    plans)
+        mode="${1:-}"
+        require_mode "$mode"
+        plans_dir="$WORKSPACES_DIR/$mode/plans"
+        if [ ! -d "$plans_dir" ]; then
+            echo "Sin planes."
+            exit 0
+        fi
+        # Glob *-plan.md: si no matchea nada, $f queda con el patrón
+        # literal — el '[ -f ]' lo descarta y reportamos "Sin planes."
+        found=0
+        for f in "$plans_dir"/*-plan.md; do
+            [ -f "$f" ] || continue
+            found=1
+            echo "$f"
+        done
+        if [ "$found" -eq 0 ]; then
+            echo "Sin planes."
+        fi
         ;;
     "")
         usage >&2

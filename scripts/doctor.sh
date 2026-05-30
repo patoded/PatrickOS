@@ -187,17 +187,26 @@ run_diagnostic() {
     fi
     echo
 
-    # 7) OpenClaw dry-run smoke. FAIL si no se genera el plan.
+    # 7) OpenClaw dry-run smoke. FAIL si no se genera el plan o si
+    # plans/ no recibe la copia histórica.
     echo "--- openclaw dry-run smoke ---"
     oc_script="$script_dir/openclaw-stub.sh"
     oc_out="$(PATRICK_OS_HOME="$SANDBOX" "$oc_script" run --mode desarrollo "doctor smoke" 2>&1)"
     oc_rc=$?
     plan="$SANDBOX/workspaces/desarrollo/last-plan.md"
-    if [ "$oc_rc" -eq 0 ] && [ -f "$plan" ]; then
-        ok "openclaw dry-run generó plan: $plan"
+    plans_dir="$SANDBOX/workspaces/desarrollo/plans"
+    # Conteo de *-plan.md vía glob: si no hay matches, el shopt
+    # nullglob no está seteado, así que comparamos contra el patrón
+    # literal cuando no hay matches reales.
+    plan_count=0
+    for p in "$plans_dir"/*-plan.md; do
+        [ -f "$p" ] && plan_count=$((plan_count + 1))
+    done
+    if [ "$oc_rc" -eq 0 ] && [ -f "$plan" ] && [ "$plan_count" -ge 1 ]; then
+        ok "openclaw dry-run generó plan + historial ($plan_count en $plans_dir)"
     else
         plan_state="$([ -f "$plan" ] && echo present || echo missing)"
-        fail "openclaw dry-run (exit=$oc_rc plan=$plan_state)"
+        fail "openclaw dry-run (exit=$oc_rc last-plan=$plan_state historial=$plan_count)"
         show_tail "$oc_out"
     fi
     echo
