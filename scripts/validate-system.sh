@@ -155,6 +155,18 @@ else
     warn "workspaces dir no se pudo crear: $workspaces_dir"
 fi
 
+# 12) workspace.sh presente y ejecutable (backend de 'watson workspace').
+workspace_script="$scripts_dir/workspace.sh"
+if [ -f "$workspace_script" ]; then
+    if [ -x "$workspace_script" ]; then
+        ok "workspace.sh presente y ejecutable: $workspace_script"
+    else
+        warn "workspace.sh presente pero no ejecutable: $workspace_script (chmod +x)"
+    fi
+else
+    warn "workspace.sh ausente: $workspace_script"
+fi
+
 echo
 echo "Resumen: WARN=$warn_count FAIL=$fail_count"
 exit "$fail_count"

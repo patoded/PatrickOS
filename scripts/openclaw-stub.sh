@@ -91,7 +91,17 @@ case "$cmd" in
 
         ws_dir="$WORKSPACES_DIR/$mode"
         plan_file="$ws_dir/last-plan.md"
-        mkdir -p "$ws_dir" "$LOG_DIR"
+        mkdir -p "$LOG_DIR"
+        # Delegar la creación del workspace (dir + README) en
+        # workspace.sh para mantener una sola convención de
+        # path/inicialización. Fallback a mkdir si por algún motivo
+        # workspace.sh no está al lado.
+        ws_script="$(dirname "$0")/workspace.sh"
+        if [ -x "$ws_script" ]; then
+            "$ws_script" init "$mode" >/dev/null
+        else
+            mkdir -p "$ws_dir"
+        fi
 
         fecha="$(date '+%Y-%m-%d %H:%M:%S')"
         # Sobrescribimos last-plan.md a propósito: es "el último plan".
