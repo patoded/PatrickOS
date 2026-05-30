@@ -6,13 +6,13 @@
 #   scripts/home.sh
 #
 # Secciones:
-#   Estado Watson  — versión de Watson CLI.
-#   Sistema        — hostname / uptime / memoria.
-#   Daily          — delega en daily.sh si está presente y ejecutable.
-#   Atajos         — recordatorio de comandos comunes.
+#   Estado Watson    — versión de Watson CLI.
+#   Sistema          — hostname / uptime / memoria.
+#   Notas recientes  — últimas líneas de ~/.patrick-os/notes/notes.md.
+#   Tareas pendientes — pendientes ("- [ ]") de ~/.patrick-os/todos/todos.md.
+#   Atajos           — recordatorio de comandos comunes.
 #
-# Overrides reconocidos (los respeta daily.sh, los enumeramos acá para que
-# correr este script con sandbox funcione idéntico al resto):
+# Overrides reconocidos (compartidos con notes.sh / todos.sh / daily.sh):
 #   PATRICK_OS_NOTES_DIR
 #   PATRICK_OS_TODOS_DIR
 
@@ -22,17 +22,25 @@
 script_dir="$(cd "$(dirname "$0")" && pwd)"
 repo_dir="$(dirname "$script_dir")"
 
+NOTES_FILE="${PATRICK_OS_NOTES_DIR:-$HOME/.patrick-os/notes}/notes.md"
+TODOS_FILE="${PATRICK_OS_TODOS_DIR:-$HOME/.patrick-os/todos}/todos.md"
+
 echo "PatrickOS Home"
 
 echo
 echo "Estado Watson:"
-# Preferimos delegar en watson.py para que la versión salga del único
-# lugar donde se define (_VERSION). Si no podemos invocarlo, caemos a un
-# texto fijo para no romper el panel.
-if command -v python3 >/dev/null 2>&1 && [ -f "$repo_dir/watson/watson.py" ]; then
+# La versión vive en un único lugar (_VERSION en watson.py). Para
+# instalaciones globales el repo_dir no contiene watson/watson.py, así
+# que probamos primero el binario en PATH (instalación vía install.sh)
+# y caemos al repo solo si watson no está instalado. Llamamos a
+# 'watson version' — NO 'watson inicio' — para no entrar en recursión
+# (inicio invoca este mismo home.sh).
+if command -v watson >/dev/null 2>&1; then
+    watson version 2>/dev/null || echo "Watson CLI (no se pudo leer versión)"
+elif command -v python3 >/dev/null 2>&1 && [ -f "$repo_dir/watson/watson.py" ]; then
     python3 "$repo_dir/watson/watson.py" version 2>/dev/null || echo "Watson CLI (no se pudo leer versión)"
 else
-    echo "Watson CLI (python3/watson.py no disponible)"
+    echo "Watson CLI no disponible"
 fi
 
 echo
@@ -54,20 +62,37 @@ else
 fi
 
 echo
-echo "Daily:"
-daily_script="$script_dir/daily.sh"
-if [ -x "$daily_script" ]; then
-    # daily.sh ya respeta PATRICK_OS_NOTES_DIR / PATRICK_OS_TODOS_DIR, así
-    # que heredamos el env tal cual.
-    "$daily_script"
+echo "Notas recientes:"
+if [ -f "$NOTES_FILE" ]; then
+    # Append-only, así que tail = más recientes. 5 líneas para que el
+    # panel siga cabiendo en una pantalla cómoda.
+    tail -n 5 "$NOTES_FILE"
 else
-    echo "daily.sh no disponible (se shippea con PR #14)."
+    echo "Sin notas."
+fi
+
+echo
+echo "Tareas pendientes:"
+if [ -f "$TODOS_FILE" ]; then
+    # Pendientes = prefijo "- [ ]". A diferencia de daily.sh, no
+    # filtramos por fecha: lo arrastrado de días previos también cuenta.
+    pendientes="$(grep -E '^- \[ \] ' "$TODOS_FILE" || true)"
+    if [ -n "$pendientes" ]; then
+        echo "$pendientes" | tail -n 10
+    else
+        echo "Sin tareas pendientes."
+    fi
+else
+    echo "Sin tareas pendientes."
 fi
 
 echo
 echo "Atajos:"
-echo "  watson nota \"texto\"   guarda nota rápida"
-echo "  watson tarea \"texto\"  agrega tarea pendiente"
-echo "  watson diario         resumen del día"
-echo "  watson ia             chequeo de Ollama/GPU"
-echo "  watson claw           OpenClaw stub"
+echo "  watson dev       entorno de desarrollo"
+echo "  watson ia        chequeo de Ollama/GPU"
+echo "  watson consulta  modo consulta clínica"
+echo "  watson clase     modo docente"
+echo "  watson video     modo edición de video"
+echo "  watson diario    resumen del día"
+echo "  watson tareas    lista de tareas"
+echo "  watson notas     lista de notas"
