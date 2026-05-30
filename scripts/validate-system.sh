@@ -219,6 +219,18 @@ else
     ok "OpenClaw KILL_SWITCH inactivo"
 fi
 
+# 17) openclaw-audit.sh presente y ejecutable (lectura del audit log).
+audit_script="$scripts_dir/openclaw-audit.sh"
+if [ -f "$audit_script" ]; then
+    if [ -x "$audit_script" ]; then
+        ok "openclaw-audit.sh presente y ejecutable: $audit_script"
+    else
+        warn "openclaw-audit.sh presente pero no ejecutable: $audit_script (chmod +x)"
+    fi
+else
+    warn "openclaw-audit.sh ausente: $audit_script"
+fi
+
 echo
 echo "Resumen: WARN=$warn_count FAIL=$fail_count"
 exit "$fail_count"

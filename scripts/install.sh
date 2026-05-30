@@ -34,6 +34,8 @@ CRITICAL_SCRIPTS=(
     todos.sh
     workspace.sh
     openclaw-stub.sh
+    openclaw-policy.sh
+    openclaw-audit.sh
     validate-system.sh
     doctor.sh
 )

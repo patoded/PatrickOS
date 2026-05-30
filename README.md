@@ -253,6 +253,32 @@ respetan). `clean --yes` borra todo el contenido y recrea el README;
 sin `--yes` solo imprime cómo confirmar y sale en 1. Sandbox vía
 `PATRICK_OS_HOME=/tmp/...` (mismo override que usa `claw`).
 
+## OpenClaw audit log
+
+Bitácora estructurada y append-only de eventos de OpenClaw (status,
+policy, kill, unkill, runs permitidos y bloqueados). Una línea por
+evento, formato estable:
+
+```
+YYYY-MM-DD HH:MM:SS | event=<evento> | mode=<modo> | result=<ok|blocked|fail|info> | detail=<texto>
+```
+
+Archivo: `~/.patrick-os/openclaw/audit.log` (respeta `PATRICK_OS_HOME`).
+Lectura vía Watson:
+
+```bash
+watson audit            # alias: aud — últimas 20 (default = tail)
+watson audit list       # log completo
+watson audit tail       # últimas 20
+watson audit path       # imprime ruta del archivo
+```
+
+Eventos registrados: `status`, `policy`, `kill`, `unkill`,
+`run_allowed`, `run_blocked_kill_switch`, `run_blocked_policy`,
+`run_invalid_mode`, `run_empty_task`. El detail incluye la tarea o
+la razón del kill cuando aplica; no se registra nada más allá de
+texto que el usuario tipeó.
+
 ## OpenClaw kill switch
 
 Pausa táctica del usuario sobre OpenClaw. Materializada como un archivo

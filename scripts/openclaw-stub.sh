@@ -22,9 +22,31 @@ set -euo pipefail
 OS_HOME="${PATRICK_OS_HOME:-$HOME/.patrick-os}"
 LOG_DIR="$OS_HOME/openclaw"
 LOG_FILE="$LOG_DIR/openclaw.log"
+AUDIT_FILE="$LOG_DIR/audit.log"
 KILL_SWITCH="$LOG_DIR/KILL_SWITCH"
 WORKSPACES_DIR="$OS_HOME/workspaces"
 ALLOWED_MODES=(consulta clase video desarrollo ia general)
+
+audit_log() {
+    # Una línea por evento, formato estable parseable. Detail puede ser
+    # texto libre (tarea recibida, razón del kill, etc.) pero sin
+    # newlines — el formato es estrictamente una línea por entrada.
+    # Mode vacío se escribe como '-' para que el campo no quede colgado.
+    local event="$1"
+    local mode="${2:--}"
+    local result="$3"
+    local detail="${4:-}"
+    mkdir -p "$LOG_DIR" 2>/dev/null || return 0
+    # tr -d '\n\r' por defensa: si alguien pasa una tarea con \n, no
+    # corrompemos el formato. Los | en detail los dejamos pasar — son
+    # menos comunes y el parser puede manejar | como separador "hasta
+    # primer occurrence" + resto como detail.
+    detail="$(printf '%s' "$detail" | tr -d '\n\r')"
+    printf '%s | event=%s | mode=%s | result=%s | detail=%s\n' \
+        "$(date '+%Y-%m-%d %H:%M:%S')" \
+        "$event" "$mode" "$result" "$detail" \
+        >> "$AUDIT_FILE"
+}
 
 print_status() {
     echo "OpenClaw Runtime: stub"
@@ -66,6 +88,7 @@ shift || true
 
 case "$cmd" in
     status|"")
+        audit_log "status" "-" "info" ""
         print_status
         exit 0
         ;;
@@ -83,6 +106,7 @@ case "$cmd" in
         else
             printf 'killed_at: %s\nreason: %s\n' "$ts" "$razon" > "$KILL_SWITCH"
         fi
+        audit_log "kill" "-" "info" "$razon"
         echo "KILL_SWITCH activado: $KILL_SWITCH"
         [ -n "$razon" ] && echo "Razón: $razon"
         exit 0
@@ -90,8 +114,10 @@ case "$cmd" in
     unkill)
         if [ -f "$KILL_SWITCH" ]; then
             rm -f "$KILL_SWITCH"
+            audit_log "unkill" "-" "info" ""
             echo "KILL_SWITCH desactivado: $KILL_SWITCH"
         else
+            audit_log "unkill" "-" "info" "noop (ya inactivo)"
             echo "KILL_SWITCH ya estaba inactivo ($KILL_SWITCH)."
         fi
         exit 0
@@ -99,12 +125,15 @@ case "$cmd" in
     policy)
         # Delegar en openclaw-policy.sh. Cualquier arg extra se pasa
         # ('show' por default si no hay nada). Mantenemos el script
-        # de policy al lado nuestro (mismo dir).
+        # de policy al lado nuestro (mismo dir). Auditamos ANTES del
+        # exec — después del exec ya somos otro proceso.
         pol_script="$(dirname "$0")/openclaw-policy.sh"
         if [ ! -x "$pol_script" ]; then
+            audit_log "policy" "-" "fail" "openclaw-policy.sh no presente"
             echo "Error: openclaw-policy.sh no presente en $(dirname "$0")." >&2
             exit 1
         fi
+        audit_log "policy" "-" "info" "${1:-show}"
         exec "$pol_script" "$@"
         ;;
     run)
@@ -121,6 +150,7 @@ case "$cmd" in
             shift || true
         fi
         if ! mode_allowed "$mode"; then
+            audit_log "run_invalid_mode" "$mode" "fail" "modo no permitido"
             echo "Error: modo '$mode' no permitido." >&2
             echo "Modos permitidos: ${ALLOWED_MODES[*]}" >&2
             exit 1
@@ -131,6 +161,7 @@ case "$cmd" in
         tarea="${tarea#"${tarea%%[![:space:]]*}"}"
         tarea="${tarea%"${tarea##*[![:space:]]}"}"
         if [ -z "$tarea" ]; then
+            audit_log "run_empty_task" "$mode" "fail" "tarea vacía"
             echo "Error: tarea vacía." >&2
             usage >&2
             exit 1
@@ -141,6 +172,7 @@ case "$cmd" in
         # y gana sobre la policy y sobre todo lo demás. Se desactiva con
         # 'openclaw-stub.sh unkill'.
         if [ -f "$KILL_SWITCH" ]; then
+            audit_log "run_blocked_kill_switch" "$mode" "blocked" "$tarea"
             echo "OpenClaw bloqueado por KILL_SWITCH" >&2
             echo "Archivo: $KILL_SWITCH" >&2
             exit 1
@@ -154,10 +186,12 @@ case "$cmd" in
         pol_script="$(dirname "$0")/openclaw-policy.sh"
         if [ -x "$pol_script" ]; then
             if ! "$pol_script" check >/dev/null 2>&1; then
+                audit_log "run_blocked_policy" "$mode" "blocked" "$tarea"
                 echo "Error: policy check falló. Corré '$pol_script check' para ver el detalle." >&2
                 exit 1
             fi
         else
+            audit_log "run_blocked_policy" "$mode" "blocked" "openclaw-policy.sh ausente"
             echo "Error: openclaw-policy.sh no presente en $(dirname "$0"); no puedo ejecutar dry-run sin policy gate." >&2
             exit 1
         fi
@@ -195,6 +229,7 @@ EOF_PLAN
 
         printf '%s | mode=%s | dry-run | task=%s\n' \
             "$fecha" "$mode" "$tarea" >> "$LOG_FILE"
+        audit_log "run_allowed" "$mode" "ok" "$tarea"
 
         echo "OpenClaw Beta-0 dry-run"
         echo "Modo: $mode"
