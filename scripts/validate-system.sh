@@ -209,6 +209,16 @@ else
     warn "openclaw policy yaml ausente (configs_dir='${configs_dir:-?}')"
 fi
 
+# 16) Kill switch local. La presencia del archivo NO es un error: es
+# una pausa intencional del usuario. Lo reportamos como WARN para
+# que se vea cada vez que corre 'watson validar'.
+kill_switch_file="${PATRICK_OS_HOME:-$HOME/.patrick-os}/openclaw/KILL_SWITCH"
+if [ -f "$kill_switch_file" ]; then
+    warn "OpenClaw KILL_SWITCH activo: $kill_switch_file (claw run está bloqueado)"
+else
+    ok "OpenClaw KILL_SWITCH inactivo"
+fi
+
 echo
 echo "Resumen: WARN=$warn_count FAIL=$fail_count"
 exit "$fail_count"

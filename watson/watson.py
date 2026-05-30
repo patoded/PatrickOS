@@ -116,6 +116,9 @@ def mostrar_ayuda():
     print("  policy (pol)               muestra/valida configs/openclaw-policy.yaml")
     print("  policy check               valida invariantes seguras (red/sudo/plugins/...)")
     print("  claw policy                idem, vía openclaw-stub")
+    print("  claw kill [\"razón\"]        activa kill switch local (bloquea claw run)")
+    print("  claw unkill                desactiva el kill switch")
+    print("  claw status                muestra estado del runtime + kill switch")
     print("  modo consulta              flujo clínico")
     print("  modo clase                 flujo docente")
     print("  modo video                 flujo de edición")
@@ -134,6 +137,8 @@ def mostrar_ayuda():
     print("  watson doctor")
     print("  watson doctor repair")
     print("  watson policy check")
+    print("  watson claw kill \"pausa de seguridad\"")
+    print("  watson claw unkill")
 
 
 def mostrar_version():
