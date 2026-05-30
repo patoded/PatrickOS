@@ -243,6 +243,30 @@ else
     warn "openclaw-tools.sh ausente: $tools_script"
 fi
 
+# 19) openclaw-contracts.sh presente y ejecutable (validador de contratos).
+contracts_script="$scripts_dir/openclaw-contracts.sh"
+if [ -f "$contracts_script" ]; then
+    if [ -x "$contracts_script" ]; then
+        ok "openclaw-contracts.sh presente y ejecutable: $contracts_script"
+    else
+        warn "openclaw-contracts.sh presente pero no ejecutable: $contracts_script (chmod +x)"
+    fi
+else
+    warn "openclaw-contracts.sh ausente: $contracts_script"
+fi
+
+# 20) openclaw-negative-tests.sh presente y ejecutable (suite de pruebas negativas).
+negtest_script="$scripts_dir/openclaw-negative-tests.sh"
+if [ -f "$negtest_script" ]; then
+    if [ -x "$negtest_script" ]; then
+        ok "openclaw-negative-tests.sh presente y ejecutable: $negtest_script"
+    else
+        warn "openclaw-negative-tests.sh presente pero no ejecutable: $negtest_script (chmod +x)"
+    fi
+else
+    warn "openclaw-negative-tests.sh ausente: $negtest_script"
+fi
+
 echo
 echo "Resumen: WARN=$warn_count FAIL=$fail_count"
 exit "$fail_count"

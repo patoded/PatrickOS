@@ -166,3 +166,38 @@ con Beta-1 cuando el runtime + los controles del
 El execution gate (`watson claw execute`) sigue siempre en
 `blocked-by-design` independientemente del contenido de
 `openclaw-tools.yaml`.
+
+## Validación actual
+
+A partir de v0.4 hay un validador dedicado de los contratos del
+registry, separado del policy check pero compartiendo el archivo:
+
+```bash
+scripts/openclaw-contracts.sh check   # baseline + shape + reglas duras
+watson contracts check                # alias: ctr
+make contracts-check                  # target del Makefile
+```
+
+El validador hace tres cosas:
+
+1. Confirma los invariantes baseline (`version: 1`,
+   `default_state: disabled`).
+2. Si `tools: []` (Beta-0): reporta `[OK] tool registry
+   disabled/empty` y sale 0.
+3. Si `tools` no está vacío (cuando llegue Beta-1): para cada
+   entrada verifica presencia de los **11 campos** del contrato
+   (name, description, allowed_modes, allowed_args, denied_args,
+   filesystem_scope, network, sudo, timeout_seconds,
+   requires_confirmation, log_level), y aplica reglas duras —
+   FAIL si alguna tool declara `sudo: true|enabled`, `network:
+   enabled`, o un `name` que no matchea `[a-z][a-z0-9_]*`.
+
+El validador NO interpreta valores YAML completos (sin parser
+externo); usa `grep` + `awk` sobre patrones literales. Es suficiente
+para el shape chico y predecible del contrato. Cuando el archivo
+crezca, hay que reescribirlo.
+
+**El registry actual sigue `disabled/empty` y ningún contrato
+habilita ejecución real todavía.** Habilitar la primera herramienta
+requiere PR explícito que actualice este documento, el modelo de
+seguridad, y `OPENCLAW_BETA1_PLAN.md`.

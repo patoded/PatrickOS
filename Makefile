@@ -3,7 +3,7 @@
 
 PYTHON ?= python3
 
-.PHONY: watson install test lint iso clean help check pr merge fix-perms check-installed doctor doctor-repair
+.PHONY: watson install test lint iso clean help check pr merge fix-perms check-installed doctor doctor-repair negative-tests contracts-check safety-check
 
 help:
 	@echo "Targets disponibles:"
@@ -15,6 +15,9 @@ help:
 	@echo "  make check-installed - Verifica que /usr/local/bin/watson está en sync con el repo."
 	@echo "  make doctor    - Diagnóstico integral (repo + global + smokes)."
 	@echo "  make doctor-repair - Diagnóstico + sudo install + re-check (vía watson)."
+	@echo "  make negative-tests - Suite de pruebas negativas de OpenClaw (gates deben bloquear)."
+	@echo "  make contracts-check - Valida configs/openclaw-tools.yaml (baseline + shape)."
+	@echo "  make safety-check  - Combo: check + policy + tools + contracts + negative-tests + doctor."
 	@echo "  make pr        - Abre PR contra main. Uso: make pr TITLE=\"...\""
 	@echo "  make merge     - Mergea PR actual (squash) y vuelve a main. PR=N opcional."
 	@echo "  make fix-perms - chmod +x scripts/*.sh (rescate post-edición Windows/WSL)."
@@ -54,6 +57,23 @@ doctor:
 
 doctor-repair:
 	$(PYTHON) watson/watson.py doctor repair
+
+negative-tests:
+	bash scripts/openclaw-negative-tests.sh
+
+contracts-check:
+	bash scripts/openclaw-contracts.sh check
+
+# Combo de validación de seguridad para v0.4 / Beta-1 prep. Encadena
+# con && para que el primer FAIL aborte (no enmascaramos problemas
+# bajo capas).
+safety-check:
+	$(MAKE) check
+	$(PYTHON) watson/watson.py policy check
+	$(PYTHON) watson/watson.py tools list
+	$(PYTHON) watson/watson.py contracts check
+	$(PYTHON) watson/watson.py negative-tests
+	$(PYTHON) watson/watson.py doctor
 
 fix-perms:
 	bash scripts/fix-script-perms.sh

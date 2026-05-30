@@ -28,6 +28,9 @@ _ALIAS_MAP = {
     "pol": "policy",
     "aud": "audit",
     "tls": "tools",
+    "ctr": "contracts",
+    "nt": "negative-tests",
+    "negtest": "negative-tests",
     "n": "nota",
     "ns": "notas",
     "note": "nota",
@@ -53,23 +56,28 @@ _ALIAS_MAP = {
 # normaliza el primer token vía _ALIAS_MAP, así no duplicamos dispatch.
 _PAYLOAD_PREFIXES = (
     "preguntar ia",
+    "negative-tests",
     "workspace",
     "openclaw",
+    "contracts",
     "doctor",
     "policy",
     "audit",
     "tools",
+    "negtest",
     "note",
     "nota",
     "todo",
     "tarea",
     "claw",
     "ask",
+    "ctr",
     "doc",
     "pol",
     "aud",
     "tls",
     "ws",
+    "nt",
     "n",
     "t",
 )
@@ -140,6 +148,9 @@ def mostrar_ayuda():
     print("  claw status                muestra estado del runtime + kill switch")
     print("  audit (aud) [list|tail|path] lectura del audit log estructurado de OpenClaw")
     print("  tools (tls) [list|show|path] viewer del registry de herramientas (Beta-0: vacío)")
+    print("  contracts (ctr) [check|show|path] validador de contratos (registry baseline + shape)")
+    print("  negative-tests (nt|negtest)  suite negativa de OpenClaw (gates deben bloquear)")
+    print("  claw negative-tests          idem, vía openclaw-stub")
     print("  modo consulta              flujo clínico")
     print("  modo clase                 flujo docente")
     print("  modo video                 flujo de edición")
@@ -174,6 +185,8 @@ def mostrar_ayuda():
     print("  watson claw unkill")
     print("  watson audit tail")
     print("  watson tools list")
+    print("  watson contracts check")
+    print("  watson negative-tests")
 
 
 def mostrar_version():
@@ -279,6 +292,30 @@ def ejecutar_comando(comando, pregunta=None):
         else:
             args = pregunta.split()
             ejecutar_seguro([script, *args], f"openclaw-tools.sh {args[0]}")
+
+    elif comando == "contracts":
+        # Validador de contratos del registry (Beta-1 prerequisite).
+        # Sin args defaultea a 'check' (es lo útil); 'show'/'path'
+        # se forwardean. NO ejecuta herramientas.
+        script = str(SCRIPTS_DIR / "openclaw-contracts.sh")
+        if pregunta is None or not pregunta.strip():
+            ejecutar_seguro([script, "check"], "openclaw-contracts.sh check")
+        else:
+            args = pregunta.split()
+            ejecutar_seguro([script, *args], f"openclaw-contracts.sh {args[0]}")
+
+    elif comando == "negative-tests":
+        # Suite de pruebas negativas que verifica que cada gate
+        # bloquea su escenario. NO ejecuta herramientas reales —
+        # cada test usa los gates ya en código y los considera OK
+        # cuando el comando subordinado falla. Sin args corre
+        # silencioso; --verbose imprime detalle por test.
+        script = str(SCRIPTS_DIR / "openclaw-negative-tests.sh")
+        if pregunta is None or not pregunta.strip():
+            ejecutar_seguro([script], "openclaw-negative-tests.sh")
+        else:
+            args = pregunta.split()
+            ejecutar_seguro([script, *args], f"openclaw-negative-tests.sh {args[0]}")
 
     elif comando == "policy":
         # Capa de policy local de OpenClaw. Sin args = show (lectura

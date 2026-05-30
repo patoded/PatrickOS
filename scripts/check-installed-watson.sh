@@ -29,6 +29,8 @@ CRITICAL_SCRIPTS=(
     openclaw-policy.sh
     openclaw-audit.sh
     openclaw-tools.sh
+    openclaw-contracts.sh
+    openclaw-negative-tests.sh
     validate-system.sh
     doctor.sh
 )

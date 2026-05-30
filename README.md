@@ -263,6 +263,34 @@ respetan). `clean --yes` borra todo el contenido y recrea el README;
 sin `--yes` solo imprime cómo confirmar y sale en 1. Sandbox vía
 `PATRICK_OS_HOME=/tmp/...` (mismo override que usa `claw`).
 
+## OpenClaw v0.4 Safety Foundation
+
+A partir de `v0.4.0-dev` hay dos herramientas adicionales para
+cerrar la base de seguridad antes de cualquier paso hacia Beta-1
+con ejecución real:
+
+- **`scripts/openclaw-contracts.sh`** — validador del registry de
+  herramientas: invariantes baseline, shape mínima por entrada (11
+  campos) y reglas duras (sin `sudo`, sin red, names seguros).
+- **`scripts/openclaw-negative-tests.sh`** — suite de 12 pruebas
+  negativas que verifica que cada gate (policy, kill switch,
+  approval, basename, tag/priority, modo) bloquea su escenario.
+
+Comandos:
+
+```bash
+watson negative-tests      # alias: nt, negtest — corre la suite
+watson contracts check     # alias: ctr — valida el registry
+make safety-check          # combo: make check + policy + tools +
+                           #         contracts + negative-tests + doctor
+```
+
+`watson doctor` también levanta ambos como secciones del smoke
+(`--- contracts smoke ---` y `--- negative tests smoke ---`).
+La suite negativa usa sandbox dedicado `/tmp/patrick-negative-tests`
+y nunca toca `~/.patrick-os` salvo override explícito de
+`PATRICK_OS_HOME`.
+
 ## OpenClaw tools registry
 
 Viewer read-only de `configs/openclaw-tools.yaml`, el registry que
