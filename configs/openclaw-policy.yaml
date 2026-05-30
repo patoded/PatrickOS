@@ -1,0 +1,18 @@
+version: 1
+default_mode: dry_run
+network: disabled
+sudo: disabled
+plugins: disabled
+marketplace: disabled
+allowed_modes:
+  - consulta
+  - clase
+  - video
+  - desarrollo
+  - ia
+  - general
+tool_whitelist: []
+kill_switch: true
+logs:
+  enabled: true
+  path: ~/.patrick-os/openclaw/openclaw.log

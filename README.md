@@ -253,6 +253,25 @@ respetan). `clean --yes` borra todo el contenido y recrea el README;
 sin `--yes` solo imprime cómo confirmar y sale en 1. Sandbox vía
 `PATRICK_OS_HOME=/tmp/...` (mismo override que usa `claw`).
 
+## OpenClaw policy layer
+
+Antes de cualquier dry-run, OpenClaw consulta una policy local
+explícita (`configs/openclaw-policy.yaml`) que declara invariantes
+seguras: red deshabilitada, sudo deshabilitado, plugins y marketplace
+deshabilitados, `tool_whitelist: []`, `kill_switch: true`. Si alguna
+invariante no se cumple, `claw run` aborta **antes** de tocar el
+workspace.
+
+```bash
+watson policy           # alias: pol — imprime la policy en uso
+watson policy check     # valida invariantes; exit 1 si algo es inseguro
+watson claw policy      # idem, vía el openclaw stub
+```
+
+`configs/openclaw-policy.yaml` se copia a
+`/usr/local/share/patrick-os/configs/` al instalar; `check-installed`
+y `make doctor` exigen que esté en sync con el repo.
+
 ## OpenClaw: stub seguro
 
 Watson tiene cableado el comando `openclaw` (alias `claw`) como **stub
