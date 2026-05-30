@@ -371,6 +371,15 @@ Cada `run` genera/actualiza:
 
   `show-plan` solo acepta **basename** dentro de `<workspace>/plans/`;
   paths con `/` o `..` se rechazan con exit 1.
+- `~/.patrick-os/workspaces/<modo>/plans/index.tsv` — índice
+  append-only para listar planes sin abrir cada `.md`:
+
+  ```
+  timestamp<TAB>mode<TAB>filename<TAB>task
+  ```
+
+  Una línea por `claw run` permitido. `watson ws plan-index <modo>`
+  lo imprime (`Sin índice de planes.` si todavía no hubo runs).
 - `~/.patrick-os/openclaw/openclaw.log` — log append-only,
   `timestamp | mode=... | dry-run | task=...`.
 - `~/.patrick-os/openclaw/audit.log` — bitácora estructurada (ver

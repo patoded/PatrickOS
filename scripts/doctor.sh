@@ -202,11 +202,20 @@ run_diagnostic() {
     for p in "$plans_dir"/*-plan.md; do
         [ -f "$p" ] && plan_count=$((plan_count + 1))
     done
-    if [ "$oc_rc" -eq 0 ] && [ -f "$plan" ] && [ "$plan_count" -ge 1 ]; then
-        ok "openclaw dry-run generó plan + historial ($plan_count en $plans_dir)"
+    plan_index="$plans_dir/index.tsv"
+    # El índice debe existir y tener ≥1 línea (al menos la del run
+    # que acabamos de hacer). 'wc -l' sobre archivo inexistente
+    # rompería; el guard de -f lo evita.
+    index_lines=0
+    if [ -f "$plan_index" ]; then
+        index_lines=$(wc -l < "$plan_index" | tr -d ' ')
+    fi
+    if [ "$oc_rc" -eq 0 ] && [ -f "$plan" ] && [ "$plan_count" -ge 1 ] && [ "$index_lines" -ge 1 ]; then
+        ok "openclaw dry-run generó plan + historial ($plan_count) + index ($index_lines línea/s)"
     else
         plan_state="$([ -f "$plan" ] && echo present || echo missing)"
-        fail "openclaw dry-run (exit=$oc_rc last-plan=$plan_state historial=$plan_count)"
+        index_state="$([ -f "$plan_index" ] && echo present || echo missing)"
+        fail "openclaw dry-run (exit=$oc_rc last-plan=$plan_state historial=$plan_count index=$index_state líneas=$index_lines)"
         show_tail "$oc_out"
     fi
 

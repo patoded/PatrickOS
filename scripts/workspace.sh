@@ -31,6 +31,7 @@ Uso:
   workspace.sh plans <modo>
   workspace.sh last-plan <modo>
   workspace.sh show-plan <modo> <archivo|latest>
+  workspace.sh plan-index <modo>
 
 Modos permitidos: consulta, clase, video, desarrollo, ia, general
 EOF
@@ -159,6 +160,16 @@ case "$cmd" in
             exit 0
         fi
         cat "$plan"
+        ;;
+    plan-index)
+        mode="${1:-}"
+        require_mode "$mode"
+        idx="$WORKSPACES_DIR/$mode/plans/index.tsv"
+        if [ ! -f "$idx" ]; then
+            echo "Sin índice de planes."
+            exit 0
+        fi
+        cat "$idx"
         ;;
     show-plan)
         mode="${1:-}"
