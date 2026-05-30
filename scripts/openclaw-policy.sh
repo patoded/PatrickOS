@@ -111,11 +111,19 @@ case "$cmd" in
             tools_yaml="/usr/local/share/patrick-os/configs/openclaw-tools.yaml"
         fi
         if [ -n "$tools_yaml" ]; then
+            # Reglas mínimas que el policy gate exige al registry:
+            #   - default_state: disabled (siempre)
+            #   - ningún 'enabled: true' (Beta-0/v0.4 mantiene todas
+            #     las candidatas disabled)
+            # Validación profunda (12 campos, allowed_modes válidos,
+            # requires_confirmation true, etc.) vive en
+            # openclaw-contracts.sh; acá solo cortamos lo que volaría
+            # cualquier 'claw run' en sí.
             if grep -qE '^default_state:[[:space:]]+disabled[[:space:]]*$' "$tools_yaml" \
-               && grep -qE '^tools:[[:space:]]*\[\][[:space:]]*$' "$tools_yaml"; then
-                ok "tool registry: disabled/empty ($tools_yaml)"
+               && ! grep -qE '^[[:space:]]+enabled:[[:space:]]+true[[:space:]]*$' "$tools_yaml"; then
+                ok "tool registry: ningún tool enabled ($tools_yaml)"
             else
-                fail_msg "tool registry ($tools_yaml) tiene contenido inesperado para Beta-0 (default_state debe ser disabled y tools debe ser [])"
+                fail_msg "tool registry ($tools_yaml) inseguro: default_state debe ser 'disabled' y ningún tool puede declarar 'enabled: true'"
             fi
         fi
 

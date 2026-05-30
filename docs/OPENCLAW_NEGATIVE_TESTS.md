@@ -143,12 +143,14 @@ disparar, el evento de audit esperado, y el resultado esperado.
 
 A partir de v0.4 hay un runner automático sobre los gates de
 Beta-0; cubre items 1, 2, 3, 4 (execute aprobado → blocked-by-design),
-5, 6 (tag inválido), 7 (priority inválida), 8 (tools vacío),
+5, 6 (tag inválido), 7 (priority inválida), 8 (tools sentinel),
 9 (path traversal en execute), 10 (modo inválido), 11 (policy
-sana), y 12 (viewer del registry). Los items 7-11 del catálogo
-(sandbox, sudo, red, shell libre, modificar policy, plugin
-externo) siguen documentados — quedan para Beta-1 cuando el
-sandbox de proceso esté en código.
+sana), 12 (viewer del registry), y **13 (tools registry tampered
+con `enabled: true` → contracts check FAIL)** — el último cubre
+explícitamente el item 10 del catálogo (modificar policy/registry
+desde un actor). Los items restantes (sandbox, sudo, red, shell
+libre, plugin externo) siguen documentados — quedan para Beta-1
+cuando el sandbox de proceso esté en código.
 
 ```bash
 scripts/openclaw-negative-tests.sh        # runner directo

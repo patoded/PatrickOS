@@ -19,12 +19,16 @@ Documentos hermanos:
 - [`OPENCLAW_BETA0_CHECKLIST.md`](OPENCLAW_BETA0_CHECKLIST.md) —
   checklist formal de cierre de Beta-0.
 
-Beta-0 ya tiene su checklist de cierre. El tool registry sigue
-vacío/deshabilitado (`tools: []`, `default_state: disabled`), validado
-por `policy check` y por el doctor smoke. El siguiente paso técnico
-antes de Beta-1 es **sandbox real + allowlist concreta + contratos
-ejecutables**: implementar lo que el contrato describe, no agregar
-documentos.
+Beta-0 ya tiene su checklist de cierre. Desde v0.4, el tool
+registry ya **tiene la allowlist concreta** (`configs/openclaw-tools.yaml`
+con 7 candidatas, todas `enabled: false`); cada entrada pasa la
+shape validation de `scripts/openclaw-contracts.sh` y el negative
+test 13 prueba que cualquier intento de pasar una a `enabled: true`
+es rechazado. `policy check` mantiene `tool registry: ningún tool
+enabled` mientras eso siga. El siguiente paso técnico antes de
+Beta-1 es **sandbox real + filesystem boundaries + confirmation
+gate ejecutable**: implementar el wrapper que el contrato describe,
+no agregar más entradas al registry.
 
 ## Amenazas principales
 

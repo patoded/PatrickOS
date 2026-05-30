@@ -14,6 +14,15 @@ primera herramienta real: no se evalúa ninguna fase de runtime sin
 que el contracts validator pase y la suite negativa termine en
 FAIL=0.
 
+A partir de este PR, **las 7 candidatas de Beta-1 ya están
+declaradas en `configs/openclaw-tools.yaml`** con `enabled: false`.
+Esto cumple la **fase 2** (allowlist concreta) sin habilitar nada:
+el shape del contrato vive en código, el validador lo prueba en
+cada `make safety-check`, y cualquier intento de pasar una
+candidata a `enabled: true` rompe el policy gate antes de cualquier
+`claw run`. Habilitar la primera entrada sigue requiriendo PR
+explícito que ataque las fases 3-8.
+
 Documentos hermanos:
 
 - [`OPENCLAW_BETA0_SPEC.md`](OPENCLAW_BETA0_SPEC.md) — contrato de la

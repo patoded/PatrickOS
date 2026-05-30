@@ -1,3 +1,87 @@
 version: 1
 default_state: disabled
-tools: []
+tools:
+  - name: read_file
+    enabled: false
+    description: Lee un archivo de texto dentro del workspace del modo activo.
+    allowed_modes: [desarrollo]
+    allowed_args: ["^[A-Za-z0-9._/-]+$"]
+    denied_args: ["^/", "\\.\\."]
+    filesystem_scope: "$PATRICK_OS_HOME/workspaces/desarrollo/"
+    network: disabled
+    sudo: disabled
+    timeout_seconds: 5
+    requires_confirmation: true
+    log_level: audit
+  - name: list_dir
+    enabled: false
+    description: Lista archivos dentro del workspace del modo activo.
+    allowed_modes: [desarrollo]
+    allowed_args: ["^[A-Za-z0-9._/-]*$"]
+    denied_args: ["^/", "\\.\\."]
+    filesystem_scope: "$PATRICK_OS_HOME/workspaces/desarrollo/"
+    network: disabled
+    sudo: disabled
+    timeout_seconds: 5
+    requires_confirmation: true
+    log_level: audit
+  - name: append_note
+    enabled: false
+    description: Appendea una línea a notes/notes.md gestionado por Watson.
+    allowed_modes: [general, consulta, clase, video, desarrollo, ia]
+    allowed_args: ["^.{1,500}$"]
+    denied_args: []
+    filesystem_scope: "$PATRICK_OS_HOME/notes/"
+    network: disabled
+    sudo: disabled
+    timeout_seconds: 5
+    requires_confirmation: true
+    log_level: audit
+  - name: create_task
+    enabled: false
+    description: Appendea una línea a todos/todos.md gestionado por Watson.
+    allowed_modes: [general, consulta, clase, video, desarrollo, ia]
+    allowed_args: ["^.{1,500}$"]
+    denied_args: []
+    filesystem_scope: "$PATRICK_OS_HOME/todos/"
+    network: disabled
+    sudo: disabled
+    timeout_seconds: 5
+    requires_confirmation: true
+    log_level: audit
+  - name: git_status
+    enabled: false
+    description: Corre git status --short en el repo PatrickOS (read-only).
+    allowed_modes: [desarrollo]
+    allowed_args: []
+    denied_args: []
+    filesystem_scope: "$HOME/patrick-os/"
+    network: disabled
+    sudo: disabled
+    timeout_seconds: 10
+    requires_confirmation: true
+    log_level: audit
+  - name: git_diff
+    enabled: false
+    description: Corre git diff en el repo PatrickOS (read-only).
+    allowed_modes: [desarrollo]
+    allowed_args: []
+    denied_args: []
+    filesystem_scope: "$HOME/patrick-os/"
+    network: disabled
+    sudo: disabled
+    timeout_seconds: 10
+    requires_confirmation: true
+    log_level: audit
+  - name: run_tests
+    enabled: false
+    description: Corre make check en el repo PatrickOS (lectura + verificación).
+    allowed_modes: [desarrollo]
+    allowed_args: []
+    denied_args: []
+    filesystem_scope: "$HOME/patrick-os/"
+    network: disabled
+    sudo: disabled
+    timeout_seconds: 60
+    requires_confirmation: true
+    log_level: audit

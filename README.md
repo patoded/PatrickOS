@@ -294,22 +294,41 @@ y nunca toca `~/.patrick-os` salvo override explícito de
 ## OpenClaw tools registry
 
 Viewer read-only de `configs/openclaw-tools.yaml`, el registry que
-define qué herramientas tendría permitido invocar OpenClaw. **En Beta-0
-está vacío y deshabilitado por contrato** (`tools: []`,
-`default_state: disabled`); ninguna herramienta se ejecuta.
+define qué herramientas tendría permitido invocar OpenClaw. Desde
+v0.4 contiene **7 candidatas Beta-1 declaradas con `enabled: false`**
+(`read_file`, `list_dir`, `append_note`, `create_task`,
+`git_status`, `git_diff`, `run_tests`); `default_state: disabled`;
+**ninguna herramienta se ejecuta**.
 
 ```bash
 watson tools           # alias: tls — equivalente a 'tools list'
-watson tools list      # "No hay herramientas habilitadas."
+watson tools list      # candidatas con su estado + "No hay herramientas habilitadas."
 watson tools show      # imprime el YAML completo
 watson tools path      # imprime ruta del archivo
 ```
 
-`policy check` ya valida que el registry esté en estado Beta-0; el
-viewer es un atajo para leerlo sin recordar el path. Habilitar una
-herramienta requiere PR explícito que actualice también
-[`OPENCLAW_TOOL_CONTRACTS.md`](docs/OPENCLAW_TOOL_CONTRACTS.md) y
-[`OPENCLAW_SAFETY_MODEL.md`](docs/OPENCLAW_SAFETY_MODEL.md).
+Salida típica de `watson tools list`:
+
+```
+read_file disabled
+list_dir disabled
+append_note disabled
+create_task disabled
+git_status disabled
+git_diff disabled
+run_tests disabled
+No hay herramientas habilitadas.
+```
+
+`policy check` valida que ningún tool tenga `enabled: true` y que
+`default_state: disabled` se mantenga; `contracts check` valida
+adicionalmente los 12 campos del contrato por entrada + reglas
+duras (`sudo`, `network`, `requires_confirmation`, `name` regex,
+`allowed_modes`). Habilitar una herramienta requiere PR explícito
+que actualice también
+[`OPENCLAW_TOOL_CONTRACTS.md`](docs/OPENCLAW_TOOL_CONTRACTS.md),
+[`OPENCLAW_SAFETY_MODEL.md`](docs/OPENCLAW_SAFETY_MODEL.md) y
+[`OPENCLAW_BETA1_PLAN.md`](docs/OPENCLAW_BETA1_PLAN.md).
 
 ## OpenClaw audit log
 
