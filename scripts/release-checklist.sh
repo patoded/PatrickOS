@@ -86,7 +86,9 @@ else
 fi
 
 # 4) Checklist por familia de versión (v0.2 → V0.2_ALPHA_CHECKLIST.md,
-#    v0.3 → V0.3_ALPHA_CHECKLIST.md, etc.).
+#    v0.3 → V0.3_ALPHA_CHECKLIST.md, etc.). v0.4 todavía no tiene
+#    checklist propio — el plan/release notes cubren el estado del
+#    ciclo; cuando aparezca, se agrega acá.
 case "$target_version" in
     v0.2.*) checklist="$repo_dir/docs/V0.2_ALPHA_CHECKLIST.md" ;;
     v0.3.*) checklist="$repo_dir/docs/V0.3_ALPHA_CHECKLIST.md" ;;
@@ -108,16 +110,34 @@ else
     fail "contexto faltante: $ctx"
 fi
 
-# 5b) Docs de OpenClaw Beta-0 obligatorios para targets v0.3.x. La
-#    presencia de estos archivos materializa el contrato: spec,
-#    modelo de seguridad, contratos de herramientas y checklist
-#    formal de cierre tienen que existir antes de tagear v0.3.
+# 5b) Docs de OpenClaw obligatorios por familia de versión. La
+#    presencia de estos archivos materializa el contrato del ciclo.
+#    v0.3 cerró Beta-0; v0.4 mantiene esos + suma los de Beta-1
+#    planning (plan, negative tests).
 case "$target_version" in
     v0.3.*)
         for f in OPENCLAW_BETA0_SPEC.md \
                  OPENCLAW_SAFETY_MODEL.md \
                  OPENCLAW_TOOL_CONTRACTS.md \
                  OPENCLAW_BETA0_CHECKLIST.md; do
+            if [ -f "$repo_dir/docs/$f" ]; then
+                ok "doc OpenClaw: docs/$f"
+            else
+                fail "doc OpenClaw faltante: docs/$f"
+            fi
+        done
+        ;;
+    v0.4.*)
+        # Beta-0 docs siguen siendo contrato vivo en v0.4 (el dry-run
+        # no se desarma); a eso le sumamos los docs nuevos del ciclo
+        # de Beta-1 planning.
+        for f in OPENCLAW_BETA0_SPEC.md \
+                 OPENCLAW_SAFETY_MODEL.md \
+                 OPENCLAW_TOOL_CONTRACTS.md \
+                 OPENCLAW_BETA0_CHECKLIST.md \
+                 V0.4_PLAN.md \
+                 OPENCLAW_BETA1_PLAN.md \
+                 OPENCLAW_NEGATIVE_TESTS.md; do
             if [ -f "$repo_dir/docs/$f" ]; then
                 ok "doc OpenClaw: docs/$f"
             else
