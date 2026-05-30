@@ -63,14 +63,15 @@ fi
 echo "Pre-flight: grub-mkrescue presente ($(command -v grub-mkrescue))."
 echo
 
-# 1) Poblar includes.chroot con Watson + scripts + docs.
-echo "[1/7] Copiando Watson, scripts y docs a includes.chroot..."
+# 1) Poblar includes.chroot con Watson + scripts + docs + configs.
+echo "[1/7] Copiando Watson, scripts, docs y configs a includes.chroot..."
 
 WATSON_DEST="$includes_dir/usr/local/bin/watson"
 SCRIPTS_DEST="$includes_dir/usr/local/share/patrick-os/scripts"
 DOCS_DEST="$includes_dir/usr/local/share/patrick-os/docs"
+CONFIGS_DEST="$includes_dir/usr/local/share/patrick-os/configs"
 
-mkdir -p "$(dirname "$WATSON_DEST")" "$SCRIPTS_DEST" "$DOCS_DEST"
+mkdir -p "$(dirname "$WATSON_DEST")" "$SCRIPTS_DEST" "$DOCS_DEST" "$CONFIGS_DEST"
 
 cp "$repo_dir/watson/watson.py" "$WATSON_DEST"
 # Ajustar SCRIPTS_DIR de la copia instalada a la ruta del sistema.
@@ -83,6 +84,25 @@ chmod +x "$SCRIPTS_DEST"/*.sh
 
 cp "$repo_dir/docs/README.md" "$DOCS_DEST/"
 cp "$repo_dir/docs/ARCHITECTURE.md" "$DOCS_DEST/"
+
+# Configs (OpenClaw policy + tool registry). Sin estos archivos
+# 'watson policy check' falla con "policy no encontrada", el
+# policy gate bloquea cualquier 'claw run', y el doctor cierra con
+# FAIL>0 dentro de la VM. Bug confirmado en QEMU contra la ISO
+# v0.3.0-alpha previa, que llevaba scripts/docs pero no configs/.
+cp "$repo_dir/configs/"*.yaml "$CONFIGS_DEST/"
+chmod 0644 "$CONFIGS_DEST"/*.yaml
+
+# Verificación build-time: si los configs críticos no quedaron en el
+# tree, abortamos antes de gastar 20-40 min en lb build + grub-mkrescue.
+for required in openclaw-policy.yaml openclaw-tools.yaml; do
+    if [ ! -f "$CONFIGS_DEST/$required" ]; then
+        echo "ERROR: $CONFIGS_DEST/$required no quedó en includes.chroot." >&2
+        echo "       (¿existe $repo_dir/configs/$required en el repo?)" >&2
+        ls -la "$repo_dir/configs/" 2>/dev/null | sed 's/^/  /' >&2
+        exit 1
+    fi
+done
 
 echo "    Listo."
 
