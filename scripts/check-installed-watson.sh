@@ -26,6 +26,7 @@ CRITICAL_SCRIPTS=(
     workspace.sh
     openclaw-stub.sh
     validate-system.sh
+    doctor.sh
 )
 
 # Docs cuya presencia post-install consideramos contrato. ask-local.sh

@@ -3,7 +3,7 @@
 
 PYTHON ?= python3
 
-.PHONY: watson install test lint iso clean help check pr merge fix-perms check-installed
+.PHONY: watson install test lint iso clean help check pr merge fix-perms check-installed doctor
 
 help:
 	@echo "Targets disponibles:"
@@ -13,6 +13,7 @@ help:
 	@echo "  make lint      - shellcheck en scripts + compilación de watson.py."
 	@echo "  make check     - Pasada rápida pre-PR (lint + smoke de Watson)."
 	@echo "  make check-installed - Verifica que /usr/local/bin/watson está en sync con el repo."
+	@echo "  make doctor    - Diagnóstico integral (repo + global + smokes)."
 	@echo "  make pr        - Abre PR contra main. Uso: make pr TITLE=\"...\""
 	@echo "  make merge     - Mergea PR actual (squash) y vuelve a main. PR=N opcional."
 	@echo "  make fix-perms - chmod +x scripts/*.sh (rescate post-edición Windows/WSL)."
@@ -46,6 +47,9 @@ check:
 
 check-installed:
 	bash scripts/check-installed-watson.sh
+
+doctor:
+	bash scripts/doctor.sh
 
 fix-perms:
 	bash scripts/fix-script-perms.sh

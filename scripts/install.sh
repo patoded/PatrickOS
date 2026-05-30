@@ -28,6 +28,7 @@ CRITICAL_SCRIPTS=(
     workspace.sh
     openclaw-stub.sh
     validate-system.sh
+    doctor.sh
 )
 
 if [ "$(id -u)" -ne 0 ]; then
