@@ -293,6 +293,29 @@ Regla: no hacer PR manual desde navegador salvo emergencia.
 4. Reconstruir ISO v0.2.0-alpha solo cuando Watson tenga suficiente valor añadido.
 5. Después explorar OpenClaw runtime real con aislamiento, whitelist y sin ejecución libre.
 
+## Próximo foco: v0.3 / OpenClaw Beta-0
+
+Tras cerrar v0.2 (código + ISO), el siguiente avance es v0.3:
+release de **preparación**, no de runtime agéntico.
+
+Foco:
+
+* Mejorar instalación global (`install.sh` + refresco de scripts en `/usr/local/share/patrick-os/`).
+* Iterar sobre `watson inicio` / `watson home` con feedback de uso diario.
+* Aterrizar el contrato de **OpenClaw Beta-0**: transporte por stdin/stdout o socket UNIX (sin TCP), subproceso (no daemon), workspaces aislados en `~/.patrick-os/workspaces/<modo>/`, whitelist de herramientas vacía por defecto, sin sudo, sin red, sin plugins externos, sin marketplace, logs mínimos, kill switch local vía `~/.patrick-os/openclaw.disabled`.
+* Mantener ISO v0.2 estable; reconstruir ISO v0.3 **solo al final** de v0.3.
+
+Aclaración explícita:
+
+* **OpenClaw runtime real sigue NO implementado.** Beta-0 entrega
+  únicamente el contrato y un `watson claw run "tarea"` en modo
+  `dry-run` / plan-only — no ejecuta herramientas reales.
+
+Referencias:
+
+* `docs/V0.3_PLAN.md`
+* `docs/OPENCLAW_BETA0_SPEC.md`
+
 ## Regla de interacción con Patrick
 
 Patrick no quiere explicaciones largas salvo que las pida.
