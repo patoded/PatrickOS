@@ -167,6 +167,18 @@ else
     warn "workspace.sh ausente: $workspace_script"
 fi
 
+# 13) doctor.sh presente y ejecutable (backend de 'watson doctor').
+doctor_script="$scripts_dir/doctor.sh"
+if [ -f "$doctor_script" ]; then
+    if [ -x "$doctor_script" ]; then
+        ok "doctor.sh presente y ejecutable: $doctor_script"
+    else
+        warn "doctor.sh presente pero no ejecutable: $doctor_script (chmod +x)"
+    fi
+else
+    warn "doctor.sh ausente: $doctor_script"
+fi
+
 echo
 echo "Resumen: WARN=$warn_count FAIL=$fail_count"
 exit "$fail_count"

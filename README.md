@@ -52,6 +52,19 @@ sin sudo. Compara versión y hace `cmp` byte-a-byte de cada script
 crítico y de los docs clave (`README.md`, `ARCHITECTURE.md`,
 `PROJECT_CONTEXT.md`) contra el repo. Si algo difiere, sugiere reinstalar.
 
+Para un diagnóstico todo-en-uno (repo limpio, `make check`, instalación
+global en sync, `watson version/validar`, y smokes de workspace +
+OpenClaw dry-run) usá:
+
+```bash
+watson doctor       # alias: doc
+# o:  make doctor
+```
+
+Reporta `[OK]/[WARN]/[FAIL]` por sección con resumen final
+`OK=n WARN=n FAIL=n`. Exit code = nº de FAILs. Los smokes corren en
+sandbox `/tmp/patrick-doctor` (no toca `~/.patrick-os`).
+
 ## Flujo rápido de desarrollo
 
 ```bash
