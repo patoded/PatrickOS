@@ -355,9 +355,47 @@ Tarea vacía → uso + exit 1.
 Cada `run` genera/actualiza:
 
 - `~/.patrick-os/workspaces/<modo>/last-plan.md` — último plan (se
-  sobrescribe en cada invocación).
+  sobrescribe en cada invocación; si el `KILL_SWITCH` está activo o
+  el policy gate falla, **no se escribe nada**).
 - `~/.patrick-os/openclaw/openclaw.log` — log append-only,
   `timestamp | mode=... | dry-run | task=...`.
+- `~/.patrick-os/openclaw/audit.log` — bitácora estructurada (ver
+  sección "OpenClaw audit log" arriba).
+
+Formato del plan (`last-plan.md`):
+
+```markdown
+# OpenClaw Dry Run Plan
+
+## Metadata
+Fecha: 2026-05-30 12:00:00
+Modo: desarrollo
+Workspace: ~/.patrick-os/workspaces/desarrollo
+Policy: OK
+Tool whitelist: empty
+Kill switch: disabled
+
+## Tarea solicitada
+prepara estructura de proyecto
+
+## Interpretación
+prepara estructura de proyecto
+
+## Plan propuesto
+1. Revisar contexto local permitido.
+2. Definir pasos seguros.
+3. Confirmar antes de cualquier ejecución real futura.
+
+## Herramientas
+- Permitidas: ninguna
+- Red: deshabilitada
+- Sudo: deshabilitado
+- Plugins: deshabilitados
+- Marketplace: deshabilitado
+
+## Estado
+Dry-run. Nada ejecutado.
+```
 
 Sandbox para tests: `PATRICK_OS_HOME=/tmp/pr-openclaw` redirige tanto
 log como workspaces. Contrato completo en

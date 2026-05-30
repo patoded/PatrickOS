@@ -212,19 +212,44 @@ case "$cmd" in
 
         fecha="$(date '+%Y-%m-%d %H:%M:%S')"
         # Sobrescribimos last-plan.md a propósito: es "el último plan".
-        # El historial completo va al log append-only.
+        # El historial completo va al log append-only + audit log.
+        # Si KILL_SWITCH estuviera activo ya habríamos abortado más
+        # arriba, así que acá lo reportamos como 'disabled' (no
+        # engaged) por construcción.
+        # 'Interpretación' es deliberadamente la tarea literal: sin
+        # LLM en este path, cualquier "resumen" sería inventado;
+        # devolver el texto del usuario es la opción honesta.
         cat > "$plan_file" <<EOF_PLAN
 # OpenClaw Dry Run Plan
+
+## Metadata
 Fecha: $fecha
 Modo: $mode
-Tarea: $tarea
-Herramientas permitidas: ninguna
-Red: deshabilitada
-Sudo: deshabilitado
+Workspace: $ws_dir
 Policy: OK
 Tool whitelist: empty
-Kill switch: enabled
-Estado: dry-run, nada ejecutado
+Kill switch: disabled
+
+## Tarea solicitada
+$tarea
+
+## Interpretación
+$tarea
+
+## Plan propuesto
+1. Revisar contexto local permitido.
+2. Definir pasos seguros.
+3. Confirmar antes de cualquier ejecución real futura.
+
+## Herramientas
+- Permitidas: ninguna
+- Red: deshabilitada
+- Sudo: deshabilitado
+- Plugins: deshabilitados
+- Marketplace: deshabilitado
+
+## Estado
+Dry-run. Nada ejecutado.
 EOF_PLAN
 
         printf '%s | mode=%s | dry-run | task=%s\n' \
