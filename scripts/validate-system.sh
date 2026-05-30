@@ -231,6 +231,18 @@ else
     warn "openclaw-audit.sh ausente: $audit_script"
 fi
 
+# 18) openclaw-tools.sh presente y ejecutable (viewer del tool registry).
+tools_script="$scripts_dir/openclaw-tools.sh"
+if [ -f "$tools_script" ]; then
+    if [ -x "$tools_script" ]; then
+        ok "openclaw-tools.sh presente y ejecutable: $tools_script"
+    else
+        warn "openclaw-tools.sh presente pero no ejecutable: $tools_script (chmod +x)"
+    fi
+else
+    warn "openclaw-tools.sh ausente: $tools_script"
+fi
+
 echo
 echo "Resumen: WARN=$warn_count FAIL=$fail_count"
 exit "$fail_count"
