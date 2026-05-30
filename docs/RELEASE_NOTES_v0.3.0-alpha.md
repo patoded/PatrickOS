@@ -1,5 +1,12 @@
 # PatrickOS v0.3.0-alpha
 
+## Estado
+
+**Preflight listo. La ISO se construye en un PR posterior.** Watson
+reporta `v0.3.0-alpha`; código + docs cerrados. OpenClaw Beta-0
+cerrado como capa **dry-run** segura — **no incluye ejecución
+real**.
+
 ## Enfoque
 
 Preparar Watson para operación agéntica segura con OpenClaw Beta-0,
@@ -54,4 +61,6 @@ Capa dry-run segura, sin runtime real. Lo que entra:
 - marketplace.
 - NVIDIA propietario.
 - Firefox / LibreOffice / OBS.
-- ISO v0.3.0-alpha.
+- **ISO `v0.3.0-alpha`** — se construye en un PR posterior, después
+  de mergear este preflight. Cuando exista, su SHA256 y el tag git
+  se agregan acá.

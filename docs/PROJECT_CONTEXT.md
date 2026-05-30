@@ -32,10 +32,11 @@ PatrickOS ya tiene una primera Alpha publicada:
 queda como decisión separada (ver `docs/V0.2_ALPHA_CHECKLIST.md` y
 `scripts/release-checklist.sh v0.2.0-alpha`).
 
-Ciclo actual: **`v0.3.0-dev`** — release de **preparación** agéntica
-segura, sin runtime real. Watson reporta `v0.3.0-dev`; el bump a
-`v0.3.0-alpha` se hace cuando el checklist (`docs/V0.3_ALPHA_CHECKLIST.md`)
-quede en verde. ISO v0.3 postergada por diseño.
+Ciclo actual: **`v0.3.0-alpha` en preflight**. Watson reporta
+`v0.3.0-alpha`; código + docs cerrados, OpenClaw Beta-0 cerrado
+como capa dry-run segura (ver `docs/OPENCLAW_BETA0_CHECKLIST.md`).
+**Siguiente paso: construir ISO `v0.3.0-alpha`** en un PR aparte
+una vez validado `scripts/release-checklist.sh v0.3.0-alpha`.
 
 La Alpha incluye:
 
@@ -291,11 +292,10 @@ Regla: no hacer PR manual desde navegador salvo emergencia.
 
 ## Próximos pasos inmediatos
 
-1. Cerrar PRs abiertos del ciclo `v0.3.0-dev` (workspace, doctor, doctor repair, install-validate).
-2. Mantener `make check` y `watson doctor` en verde por PR.
-3. Cuando el checklist `docs/V0.3_ALPHA_CHECKLIST.md` esté completo, bumpear `_VERSION` a `v0.3.0-alpha` y tagear.
-4. Decidir si la ISO v0.3 se construye al cierre o se posterga (default: postergar).
-5. Recién después abrir Beta-1 de OpenClaw (primera herramienta whitelisted, todavía sin red ni sudo).
+1. Mergear el PR de preflight v0.3.0-alpha (este).
+2. Construir ISO `v0.3.0-alpha` en un PR aparte, una vez que `scripts/release-checklist.sh v0.3.0-alpha` quede sin FAILs (TODOs de ISO/tag son esperados hasta ese build).
+3. Tagear `v0.3.0-alpha` cuando la ISO esté lista y validada.
+4. Recién después abrir Beta-1 de OpenClaw (primera herramienta whitelisted, todavía sin red ni sudo; requiere los controles del modelo de seguridad: sandbox real, allowlist concreta, confirmación humana por step, FS boundaries, negative tests).
 
 ## Próximo foco: v0.3 / OpenClaw Beta-0
 

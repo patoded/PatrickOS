@@ -4,7 +4,7 @@ import pathlib
 import subprocess
 import sys
 
-_VERSION = "v0.3.0-dev"
+_VERSION = "v0.3.0-alpha"
 
 # Aliases cortos → forma canónica. Normalizamos una sola vez al entrar a
 # ejecutar_comando, así el dispatcher de abajo no necesita duplicar ramas

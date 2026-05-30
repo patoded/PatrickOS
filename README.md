@@ -7,9 +7,11 @@ que orquesta el sistema desde la línea de comandos y se apoya en IA local vía
 
 ## Estado
 
-`v0.2.0-alpha` publicada (código y docs); ciclo **`v0.3.0-dev`** en
-curso (preparación agéntica segura con OpenClaw Beta-0, sin ejecución
-real). ISO v0.3 postergada por diseño; ver `docs/V0.3_PLAN.md`.
+`v0.2.0-alpha` publicada (código y docs); **`v0.3.0-alpha` en preflight,
+listo para construir ISO**. OpenClaw Beta-0 cerrado como capa dry-run
+segura (sin ejecución real, sin runtime). La ISO `v0.3.0-alpha` se
+construye en un PR posterior; este ciclo cierra código + docs. Ver
+`docs/V0.3_PLAN.md` y `docs/OPENCLAW_BETA0_CHECKLIST.md`.
 
 - Watson CLI con modos (consulta, clase, video, desarrollo, IA, preguntar IA),
   más comandos meta: `ayuda`, `version`, `estado`, `sistema`, `validar`,
@@ -221,7 +223,7 @@ watson inicio   # alias: i, home, panel
 
 Secciones (todas locales, sin red):
 
-- **Estado Watson:** versión actual (`v0.3.0-dev`).
+- **Estado Watson:** versión actual (`v0.3.0-alpha`).
 - **Sistema:** `hostname`, `uptime -p` (con fallback a `uptime` plano si
   la flag no está soportada), y `free -h` resumida.
 - **Daily:** delega en `daily.sh` si está presente y ejecutable. Si
