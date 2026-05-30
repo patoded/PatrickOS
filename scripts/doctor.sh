@@ -269,6 +269,35 @@ run_diagnostic() {
         show_tail "$ftag_out"
         show_tail "$fprio_out"
     fi
+
+    # Plan approval smoke: pending → approve → approved → recent
+    # debe mostrar approved. Si plans/ está vacío (el smoke anterior
+    # falló) saltamos con warn.
+    smoke_basename=""
+    for p in "$plans_dir"/*-plan.md; do
+        [ -f "$p" ] || continue
+        smoke_basename="$(basename "$p")"
+    done
+    if [ -z "$smoke_basename" ]; then
+        warn "plan approval smoke omitido (no hay plan en $plans_dir)"
+    else
+        ps1_out="$(PATRICK_OS_HOME="$SANDBOX" "$ws_script" plan-status desarrollo "$smoke_basename" 2>&1)"
+        ap_out="$(PATRICK_OS_HOME="$SANDBOX" "$ws_script" approve-plan desarrollo "$smoke_basename" 2>&1)"
+        ap_rc=$?
+        ps2_out="$(PATRICK_OS_HOME="$SANDBOX" "$ws_script" plan-status desarrollo "$smoke_basename" 2>&1)"
+        rec_after="$(PATRICK_OS_HOME="$SANDBOX" "$ws_script" recent desarrollo 2>&1)"
+        if [ "$ap_rc" -eq 0 ] \
+           && echo "$ps1_out"   | grep -q "status=pending" \
+           && echo "$ps2_out"   | grep -q "status=approved" \
+           && echo "$rec_after" | grep -q "approved"; then
+            ok "plan approval (pending → approve → approved en recent)"
+        else
+            fail "plan approval (ap_rc=$ap_rc)"
+            show_tail "$ps1_out"
+            show_tail "$ps2_out"
+            show_tail "$rec_after"
+        fi
+    fi
     echo
 
     # 8) Audit smoke. El smoke anterior debería haber escrito al

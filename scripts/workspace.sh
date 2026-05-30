@@ -36,6 +36,9 @@ Uso:
   workspace.sh search <modo> <texto>
   workspace.sh filter-tag <modo> <tag>
   workspace.sh filter-priority <modo> <low|normal|high>
+  workspace.sh approve-plan <modo> <filename>
+  workspace.sh reject-plan <modo> <filename> [razón]
+  workspace.sh plan-status <modo> <filename>
 
 Modos permitidos: consulta, clase, video, desarrollo, ia, general
 EOF
@@ -71,6 +74,69 @@ Modo: $mode
 Creado: $(date '+%Y-%m-%d %H:%M:%S')
 Estado: local
 EOF_README
+}
+
+# Validación de basename para subcomandos que reciben filename:
+# rechaza vacío, cualquier '/', y cualquier '..' embebido. Así
+# show-plan / approve-plan / etc. no pueden escapar de
+# <workspace>/plans/.
+require_basename() {
+    case "${1:-}" in
+        ""|*/*|*..*)
+            echo "Error: filename inválido (solo basename, sin '/' ni '..'): '${1:-}'" >&2
+            exit 1
+            ;;
+    esac
+}
+
+# Escribe el sidecar <plan>.state con status, timestamp y razón
+# opcional. Sobrescribe a propósito: 'approve' después de 'reject'
+# (o viceversa) refleja el cambio de decisión del usuario.
+write_state() {
+    local plan_file="$1"
+    local status="$2"
+    local reason="${3:-}"
+    local state_file="${plan_file}.state"
+    {
+        printf 'status=%s\n' "$status"
+        printf 'timestamp=%s\n' "$(date '+%Y-%m-%d %H:%M:%S')"
+        if [ -n "$reason" ]; then
+            # Strip newlines defensivos: el formato es key=value por
+            # línea, una razón con \n rompería el parseo.
+            local reason_clean
+            reason_clean="$(printf '%s' "$reason" | tr -d '\n\r')"
+            printf 'reason=%s\n' "$reason_clean"
+        fi
+    } > "$state_file"
+}
+
+# Reformatea líneas TSV de index.tsv (desde stdin) al output visible
+# de los comandos de lectura:
+#   timestamp | filename | tag | priority | status | task
+# Tolera índices viejos de 4 columnas (tag/priority defaults). El
+# status sale del sidecar <plans_dir>/<file>.state si existe; si no,
+# es 'pending'.
+format_index_lines() {
+    local plans_dir="$1"
+    awk -F'\t' -v plans_dir="$plans_dir" '
+        {
+            if (NF >= 6) {
+                ts=$1; file=$3; tag=$4; prio=$5; task=$6
+            } else {
+                ts=$1; file=$3; tag="general"; prio="normal"; task=$4
+            }
+            sidecar = plans_dir "/" file ".state"
+            status = "pending"
+            while ((getline line < sidecar) > 0) {
+                if (line ~ /^status=/) {
+                    sub(/^status=/, "", line)
+                    status = line
+                    break
+                }
+            }
+            close(sidecar)
+            printf "%s | %s | %s | %s | %s | %s\n", ts, file, tag, prio, status, task
+        }'
 }
 
 cmd="${1:-}"
@@ -168,21 +234,13 @@ case "$cmd" in
     plan-index)
         mode="${1:-}"
         require_mode "$mode"
-        idx="$WORKSPACES_DIR/$mode/plans/index.tsv"
+        plans_dir="$WORKSPACES_DIR/$mode/plans"
+        idx="$plans_dir/index.tsv"
         if [ ! -f "$idx" ]; then
             echo "Sin índice de planes."
             exit 0
         fi
-        # Reformat estable, compatible con índice viejo (4 col,
-        # pre-tags/priority): se rellenan defaults general/normal.
-        awk -F'\t' '
-            {
-                if (NF >= 6) {
-                    printf "%s | %s | %s | %s | %s\n", $1, $3, $4, $5, $6
-                } else {
-                    printf "%s | %s | %s | %s | %s\n", $1, $3, "general", "normal", $4
-                }
-            }' "$idx"
+        format_index_lines "$plans_dir" < "$idx"
         ;;
     recent)
         mode="${1:-}"
@@ -193,22 +251,13 @@ case "$cmd" in
             echo "Error: n debe ser entero. Recibido: '$n'." >&2
             exit 1
         fi
-        idx="$WORKSPACES_DIR/$mode/plans/index.tsv"
+        plans_dir="$WORKSPACES_DIR/$mode/plans"
+        idx="$plans_dir/index.tsv"
         if [ ! -f "$idx" ]; then
             echo "Sin planes."
             exit 0
         fi
-        # Últimas N entradas reformateadas como
-        # timestamp | filename | tag | priority | task
-        # (modo omitido porque ya viene en la query).
-        tail -n "$n" "$idx" | awk -F'\t' '
-            {
-                if (NF >= 6) {
-                    printf "%s | %s | %s | %s | %s\n", $1, $3, $4, $5, $6
-                } else {
-                    printf "%s | %s | %s | %s | %s\n", $1, $3, "general", "normal", $4
-                }
-            }'
+        tail -n "$n" "$idx" | format_index_lines "$plans_dir"
         ;;
     search)
         mode="${1:-}"
@@ -221,7 +270,8 @@ case "$cmd" in
             echo "Error: falta texto a buscar. Uso: workspace.sh search <modo> <texto>" >&2
             exit 1
         fi
-        idx="$WORKSPACES_DIR/$mode/plans/index.tsv"
+        plans_dir="$WORKSPACES_DIR/$mode/plans"
+        idx="$plans_dir/index.tsv"
         if [ ! -f "$idx" ]; then
             echo "Sin coincidencias."
             exit 0
@@ -234,14 +284,7 @@ case "$cmd" in
             echo "Sin coincidencias."
             exit 0
         fi
-        echo "$matches" | awk -F'\t' '
-            {
-                if (NF >= 6) {
-                    printf "%s | %s | %s | %s | %s\n", $1, $3, $4, $5, $6
-                } else {
-                    printf "%s | %s | %s | %s | %s\n", $1, $3, "general", "normal", $4
-                }
-            }'
+        printf '%s\n' "$matches" | format_index_lines "$plans_dir"
         ;;
     filter-tag)
         mode="${1:-}"
@@ -252,25 +295,25 @@ case "$cmd" in
             echo "Error: falta tag. Uso: workspace.sh filter-tag <modo> <tag>" >&2
             exit 1
         fi
-        idx="$WORKSPACES_DIR/$mode/plans/index.tsv"
+        plans_dir="$WORKSPACES_DIR/$mode/plans"
+        idx="$plans_dir/index.tsv"
         if [ ! -f "$idx" ]; then
             echo "Sin coincidencias."
             exit 0
         fi
-        # Match exacto en la columna tag (col 4 nueva; default
-        # 'general' para índices viejos de 4 columnas).
-        out=$(awk -F'\t' -v n="$needle" '
+        # Pre-filtramos por tag exacto (col 4 nueva; default 'general'
+        # para índices viejos) y dejamos las líneas TSV crudas. El
+        # formatter común agrega el status del sidecar.
+        matches=$(awk -F'\t' -v n="$needle" '
             {
                 if (NF >= 6) { t=$4 } else { t="general" }
-                if (t != n) next
-                if (NF >= 6) printf "%s | %s | %s | %s | %s\n", $1, $3, $4, $5, $6
-                else         printf "%s | %s | %s | %s | %s\n", $1, $3, "general", "normal", $4
+                if (t == n) print
             }' "$idx")
-        if [ -z "$out" ]; then
+        if [ -z "$matches" ]; then
             echo "Sin coincidencias."
-        else
-            echo "$out"
+            exit 0
         fi
+        printf '%s\n' "$matches" | format_index_lines "$plans_dir"
         ;;
     filter-priority)
         mode="${1:-}"
@@ -284,24 +327,70 @@ case "$cmd" in
                 exit 1
                 ;;
         esac
-        idx="$WORKSPACES_DIR/$mode/plans/index.tsv"
+        plans_dir="$WORKSPACES_DIR/$mode/plans"
+        idx="$plans_dir/index.tsv"
         if [ ! -f "$idx" ]; then
             echo "Sin coincidencias."
             exit 0
         fi
-        # Match exacto en la columna priority (col 5 nueva; default
-        # 'normal' para índices viejos).
-        out=$(awk -F'\t' -v n="$needle" '
+        # Pre-filtramos por priority (col 5; default 'normal' para
+        # índices viejos). Mismo principio que filter-tag.
+        matches=$(awk -F'\t' -v n="$needle" '
             {
                 if (NF >= 6) { p=$5 } else { p="normal" }
-                if (p != n) next
-                if (NF >= 6) printf "%s | %s | %s | %s | %s\n", $1, $3, $4, $5, $6
-                else         printf "%s | %s | %s | %s | %s\n", $1, $3, "general", "normal", $4
+                if (p == n) print
             }' "$idx")
-        if [ -z "$out" ]; then
+        if [ -z "$matches" ]; then
             echo "Sin coincidencias."
+            exit 0
+        fi
+        printf '%s\n' "$matches" | format_index_lines "$plans_dir"
+        ;;
+    approve-plan)
+        mode="${1:-}"
+        require_mode "$mode"
+        shift || true
+        file="${1:-}"
+        require_basename "$file"
+        plan_file="$WORKSPACES_DIR/$mode/plans/$file"
+        if [ ! -f "$plan_file" ]; then
+            echo "Error: plan no encontrado: $plan_file" >&2
+            exit 1
+        fi
+        write_state "$plan_file" "approved" ""
+        echo "Plan aprobado: $plan_file"
+        ;;
+    reject-plan)
+        mode="${1:-}"
+        require_mode "$mode"
+        shift || true
+        file="${1:-}"
+        require_basename "$file"
+        shift || true
+        # Razón opcional, multi-word vía $@.
+        reason="${*:-}"
+        reason="${reason#"${reason%%[![:space:]]*}"}"
+        reason="${reason%"${reason##*[![:space:]]}"}"
+        plan_file="$WORKSPACES_DIR/$mode/plans/$file"
+        if [ ! -f "$plan_file" ]; then
+            echo "Error: plan no encontrado: $plan_file" >&2
+            exit 1
+        fi
+        write_state "$plan_file" "rejected" "$reason"
+        echo "Plan rechazado: $plan_file"
+        [ -n "$reason" ] && echo "Razón: $reason"
+        ;;
+    plan-status)
+        mode="${1:-}"
+        require_mode "$mode"
+        shift || true
+        file="${1:-}"
+        require_basename "$file"
+        state_file="$WORKSPACES_DIR/$mode/plans/$file.state"
+        if [ -f "$state_file" ]; then
+            cat "$state_file"
         else
-            echo "$out"
+            echo "status=pending"
         fi
         ;;
     show-plan)
