@@ -202,6 +202,42 @@ else
     fail_msg "12. tools path/list/show — alguno falló"
 fi
 
+# ---------------------------------------------------------------
+# 13) Tools registry tampered (enabled: true) → contracts check FAIL
+# ---------------------------------------------------------------
+# Copiamos el registry vigente, mutamos cualquier 'enabled: false'
+# a 'enabled: true' y apuntamos PATRICK_OS_TOOLS al archivo roto.
+# El validador de contratos tiene que rechazar.
+CT="$script_dir/openclaw-contracts.sh"
+TAMPER_TOOLS=$(mktemp)
+SOURCE_TOOLS="$("$TL" path 2>/dev/null || true)"
+if [ -n "$SOURCE_TOOLS" ] && [ -f "$SOURCE_TOOLS" ]; then
+    sed 's/enabled: false/enabled: true/g' "$SOURCE_TOOLS" > "$TAMPER_TOOLS"
+else
+    # Fallback: registry mínimo con una tool enabled.
+    cat > "$TAMPER_TOOLS" <<'EOF_TT'
+version: 1
+default_state: disabled
+tools:
+  - name: read_file
+    enabled: true
+    description: dummy
+    allowed_modes: [desarrollo]
+    allowed_args: []
+    denied_args: []
+    filesystem_scope: "/tmp/"
+    network: disabled
+    sudo: disabled
+    timeout_seconds: 5
+    requires_confirmation: true
+    log_level: audit
+EOF_TT
+fi
+PATRICK_OS_TOOLS="$TAMPER_TOOLS" run_fail \
+    "13. tools registry tampered (enabled: true) → contracts check blocked" \
+    "$CT" check
+rm -f "$TAMPER_TOOLS"
+
 echo
 echo "Resumen: OK=$ok_count FAIL=$fail_count"
 exit "$fail_count"

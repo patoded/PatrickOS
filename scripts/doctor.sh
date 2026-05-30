@@ -348,7 +348,15 @@ run_diagnostic() {
         tls_out="$("$tools_script" list 2>&1)"
         tls_rc=$?
         if [ "$tls_rc" -eq 0 ] && echo "$tls_out" | grep -q "No hay herramientas habilitadas."; then
-            ok "tool registry: Beta-0 vacío/deshabilitado"
+            # Contar candidatas listadas (líneas con 'disabled' o
+            # 'enabled' al final) para reflejar el estado real:
+            # registry puede tener N candidatas, todas disabled.
+            n_candidates=$(echo "$tls_out" | grep -cE ' (disabled|enabled)$' || true)
+            if [ "$n_candidates" -gt 0 ]; then
+                ok "tool registry: $n_candidates candidata(s) disabled, ninguna habilitada"
+            else
+                ok "tool registry: vacío/deshabilitado"
+            fi
         else
             fail "tool registry (rc=$tls_rc)"
             show_tail "$tls_out"

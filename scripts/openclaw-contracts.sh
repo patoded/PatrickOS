@@ -93,14 +93,16 @@ case "$cmd" in
 
         # 3) Tools no vacío: shape mínima por entrada + reglas duras.
         # No interpretamos valores; verificamos que cada bloque (que
-        # arranca con '^  - name:') liste los 11 nombres de campo del
+        # arranca con '^  - name:') liste los 12 nombres de campo del
         # contrato. awk delimita bloque por bloque.
         echo "[INFO] tools registry no vacío — validando shape de cada entrada"
 
         shape_out=$(awk '
             BEGIN {
-                # 11 campos del contrato (ver OPENCLAW_TOOL_CONTRACTS.md).
-                split("name description allowed_modes allowed_args denied_args filesystem_scope network sudo timeout_seconds requires_confirmation log_level", req, " ")
+                # 12 campos del contrato (ver OPENCLAW_TOOL_CONTRACTS.md).
+                # enabled se agregó en v0.4 para diferenciar candidatas
+                # disabled de tools efectivamente habilitadas.
+                split("name enabled description allowed_modes allowed_args denied_args filesystem_scope network sudo timeout_seconds requires_confirmation log_level", req, " ")
             }
             function flush_block(   missing, i) {
                 if (block_name == "") return
@@ -138,7 +140,7 @@ case "$cmd" in
             while IFS= read -r line; do
                 case "$line" in
                     "OK "*)
-                        ok "tool '${line#OK }': 11 campos del contrato presentes"
+                        ok "tool '${line#OK }': 12 campos del contrato presentes"
                         ;;
                     "BAD "*)
                         rest="${line#BAD }"
@@ -161,6 +163,22 @@ case "$cmd" in
         else
             ok "ninguna tool declara network enabled"
         fi
+        # enabled: ninguna tool puede declarar 'enabled: true'. Beta-0/
+        # v0.4 mantiene todas las candidatas disabled. Habilitar
+        # requiere PR explícito que actualice safety model + Beta-1 plan.
+        if grep -qE '^[[:space:]]+enabled:[[:space:]]+true[[:space:]]*$' "$TOOLS"; then
+            fail_msg "alguna tool declara enabled: true (prohibido en Beta-0/v0.4)"
+        else
+            ok "ninguna tool declara enabled true"
+        fi
+        # requires_confirmation: la regla dura es 'true' por contrato.
+        # Cualquier 'requires_confirmation: false' es señal de que
+        # alguien quiso saltarse el human gate.
+        if grep -qE '^[[:space:]]+requires_confirmation:[[:space:]]+false[[:space:]]*$' "$TOOLS"; then
+            fail_msg "alguna tool declara requires_confirmation: false (prohibido)"
+        else
+            ok "todas las tools exigen requires_confirmation: true"
+        fi
         # name debe matchear [a-z][a-z0-9_]*. Buscamos las líneas
         # '  - name: <valor>' y validamos el valor por sí mismo.
         bad_names=$(grep -E '^  - name:[[:space:]]+' "$TOOLS" \
@@ -171,13 +189,41 @@ case "$cmd" in
         else
             ok "todos los names usan [a-z][a-z0-9_]*"
         fi
+        # allowed_modes: cada valor inline debe estar en el set fijo
+        # de modos. Soportamos formato '[a, b, c]' (sin newlines en el
+        # campo); las candidatas Beta-1 usan ese formato.
+        bad_modes=$(awk '
+            /^  - name:/ {
+                block = $0; sub(/^  - name:[[:space:]]+/, "", block)
+            }
+            /^[[:space:]]+allowed_modes:[[:space:]]*\[/ {
+                line = $0
+                sub(/^[[:space:]]+allowed_modes:[[:space:]]*\[/, "", line)
+                sub(/\].*$/, "", line)
+                gsub(/[[:space:]]/, "", line)
+                n = split(line, modes, ",")
+                for (i = 1; i <= n; i++) {
+                    if (modes[i] == "") continue
+                    if (modes[i] !~ /^(consulta|clase|video|desarrollo|ia|general)$/) {
+                        printf "%s:%s\n", block, modes[i]
+                    }
+                }
+            }
+        ' "$TOOLS")
+        if [ -n "$bad_modes" ]; then
+            while IFS= read -r bm; do
+                fail_msg "tool '${bm%:*}': allowed_modes contiene modo no permitido '${bm#*:}'"
+            done <<< "$bad_modes"
+        else
+            ok "allowed_modes solo usa valores del set permitido"
+        fi
 
         echo
         if [ "$fail" -gt 0 ]; then
             echo "Resultado: FAIL ($fail invariante/s rota/s). NO habilitar herramienta hasta corregir." >&2
             exit 1
         fi
-        echo "Resultado: OK. Contratos válidos (shape + reglas duras). Habilitar runtime real sigue requiriendo PR específico."
+        echo "Resultado: OK. Contratos válidos (shape + reglas duras). Tools candidatas presentes, todas disabled. Habilitar runtime real sigue requiriendo PR específico."
         ;;
     *)
         echo "Uso: $0 {path|show|check}" >&2

@@ -53,20 +53,40 @@ case "$cmd" in
             echo "No hay herramientas habilitadas."
             exit 0
         fi
-        # Beta-0: la lista debe estar vacía y el estado por default
-        # disabled. Cualquiera de las dos condiciones dispara el
-        # mensaje "ninguna habilitada", consistente con que la policy
-        # también rechazaría tools con contenido.
-        if grep -qE '^default_state:[[:space:]]+disabled[[:space:]]*$' "$TOOLS" \
-           || grep -qE '^tools:[[:space:]]*\[\][[:space:]]*$' "$TOOLS"; then
+        # Atajo: si tools: [] literal, no hay candidatas — sentinel
+        # directo, sin tocar el resto.
+        if grep -qE '^tools:[[:space:]]*\[\][[:space:]]*$' "$TOOLS"; then
             echo "No hay herramientas habilitadas."
             exit 0
         fi
-        # Si llegamos acá, el YAML cambió a algo no-Beta-0. El viewer
-        # no implementa parser real — derivamos al policy check que
-        # ya tiene el guard estricto.
-        echo "Registry con contenido inesperado para Beta-0. Corré 'watson policy check'." >&2
-        exit 1
+        # Listar candidatas por bloque: '  - name: X' + el primer
+        # 'enabled: <bool>' que aparezca dentro del mismo bloque.
+        # Si la candidata no declara enabled, asumimos disabled
+        # (consistente con default_state).
+        awk '
+            BEGIN { block = ""; state = "?" }
+            function flush() {
+                if (block != "") {
+                    printf "%s %s\n", block, state
+                    block = ""; state = "?"
+                }
+            }
+            /^  - name:/ {
+                flush()
+                block = $0
+                sub(/^  - name:[[:space:]]+/, "", block)
+                state = "disabled"
+            }
+            /^[[:space:]]+enabled:[[:space:]]+true[[:space:]]*$/  { state = "enabled" }
+            /^[[:space:]]+enabled:[[:space:]]+false[[:space:]]*$/ { state = "disabled" }
+            END { flush() }
+        ' "$TOOLS"
+        # Sentinel global: si NO hay ninguna tool con 'enabled: true',
+        # mantenemos la línea histórica que el doctor y los tests
+        # negativos buscan.
+        if ! grep -qE '^[[:space:]]+enabled:[[:space:]]+true[[:space:]]*$' "$TOOLS"; then
+            echo "No hay herramientas habilitadas."
+        fi
         ;;
     *)
         echo "Uso: $0 {path|show|list}" >&2
