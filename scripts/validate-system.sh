@@ -138,6 +138,23 @@ else
     warn "home.sh ausente: $home_script (se shippea con PR #15)"
 fi
 
+# 11) Directorios base de OpenClaw Beta-0 (workspace + log). No fallamos
+# si no existen: mkdir -p los crea idempotentemente. Solo WARN si el FS
+# rechaza la creación (permisos, FS read-only, etc.).
+os_home="${PATRICK_OS_HOME:-$HOME/.patrick-os}"
+openclaw_dir="$os_home/openclaw"
+workspaces_dir="$os_home/workspaces"
+if mkdir -p "$openclaw_dir" 2>/dev/null; then
+    ok "openclaw dir disponible: $openclaw_dir"
+else
+    warn "openclaw dir no se pudo crear: $openclaw_dir"
+fi
+if mkdir -p "$workspaces_dir" 2>/dev/null; then
+    ok "workspaces dir disponible: $workspaces_dir"
+else
+    warn "workspaces dir no se pudo crear: $workspaces_dir"
+fi
+
 echo
 echo "Resumen: WARN=$warn_count FAIL=$fail_count"
 exit "$fail_count"

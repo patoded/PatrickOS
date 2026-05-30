@@ -48,10 +48,12 @@ _ALIAS_MAP = {
 # normaliza el primer token vía _ALIAS_MAP, así no duplicamos dispatch.
 _PAYLOAD_PREFIXES = (
     "preguntar ia",
+    "openclaw",
     "note",
     "nota",
     "todo",
     "tarea",
+    "claw",
     "ask",
     "n",
     "t",
@@ -86,7 +88,9 @@ def mostrar_ayuda():
     print("  sistema (sys)              diagnóstico (uname, free, lscpu, swap, df)")
     print("  validar (val)              corre validate-system.sh (OK/WARN/FAIL)")
     print("  release (rel)              corre release-checklist.sh")
-    print("  openclaw (claw)            stub seguro (sin runtime real)")
+    print("  openclaw (claw)            status del runtime (Beta-0 dry-run)")
+    print("  claw run \"tarea\"           plan dry-run (sin ejecutar nada)")
+    print("  claw run --mode <m> \"...\"  dry-run en workspace por modo")
     print("  nota \"texto\" (n, note)     guarda nota rápida local")
     print("  notas (ns, notes)          lista las últimas 20 notas")
     print("  tarea \"texto\" (t, todo)    agrega tarea pendiente")
@@ -105,6 +109,7 @@ def mostrar_ayuda():
     print("  watson val")
     print("  watson ask \"resume PatrickOS\"")
     print("  watson dev")
+    print("  watson claw run \"prepara un plan\"")
 
 
 def mostrar_version():
@@ -177,10 +182,17 @@ def ejecutar_comando(comando, pregunta=None):
         ejecutar_seguro([str(SCRIPTS_DIR / "release-checklist.sh")], "release-checklist.sh")
 
     elif comando == "openclaw":
-        # Stub seguro: no carga runtime real, no toca red, no ejecuta
-        # herramientas. Solo prepara el comando para integración futura
-        # con runtime aislado + whitelist.
-        ejecutar_seguro([str(SCRIPTS_DIR / "openclaw-stub.sh")], "openclaw-stub.sh")
+        # Beta-0 dry-run: sin payload = status (compatibilidad con el
+        # stub original); con payload = "run [...]" se delega tal cual
+        # al script, que parsea --mode y tarea. Splitting simple por
+        # espacios es suficiente: el script rejunta la tarea con los
+        # args sobrantes, así "plan para clase" llega completo.
+        script = str(SCRIPTS_DIR / "openclaw-stub.sh")
+        if pregunta is None or not pregunta.strip():
+            ejecutar_seguro([script], "openclaw-stub.sh")
+        else:
+            args = pregunta.split()
+            ejecutar_seguro([script, *args], f"openclaw-stub.sh {args[0]}")
 
     elif comando == "nota":
         if pregunta is None or not pregunta.strip():

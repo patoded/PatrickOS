@@ -186,21 +186,43 @@ Hereda `PATRICK_OS_NOTES_DIR` y `PATRICK_OS_TODOS_DIR` al delegar en
 ## OpenClaw: stub seguro
 
 Watson tiene cableado el comando `openclaw` (alias `claw`) como **stub
-no-op**. No carga runtime, no toca red, no ejecuta herramientas. Su único
-papel hoy es reservar el comando y la ruta del script para que la
-integración futura no requiera mover dispatch ni alias.
+seguro**. No carga runtime, no toca red, no ejecuta herramientas. Sin
+argumentos muestra el estado:
 
 ```bash
 watson openclaw   # o: watson claw
 # OpenClaw Runtime: stub
 # Estado: no instalado / no activo
 # Modo seguro: sin ejecución de herramientas
+# Beta-0 dry-run disponible: openclaw-stub.sh run "tarea"
 # Próximo paso: integrar runtime aislado con whitelist
 ```
 
-Cuando exista el runtime real (aislado + con whitelist explícita de
-herramientas), reemplaza el stub en su lugar. Esta sección NO promete
-runtime real ni fecha.
+## OpenClaw Beta-0 dry-run
+
+`watson claw run "tarea"` corre el dry-run de Beta-0: registra la tarea,
+crea un workspace aislado por modo y escribe un plan markdown. **No
+ejecuta herramientas reales, no usa red, no escala privilegios.**
+
+```bash
+watson claw run "prepara estructura de proyecto"
+watson claw run --mode clase "plan para clase"
+```
+
+Modo default: `desarrollo`. Modos permitidos: `consulta`, `clase`,
+`video`, `desarrollo`, `ia`, `general` (cualquier otro → exit 1).
+Tarea vacía → uso + exit 1.
+
+Cada `run` genera/actualiza:
+
+- `~/.patrick-os/workspaces/<modo>/last-plan.md` — último plan (se
+  sobrescribe en cada invocación).
+- `~/.patrick-os/openclaw/openclaw.log` — log append-only,
+  `timestamp | mode=... | dry-run | task=...`.
+
+Sandbox para tests: `PATRICK_OS_HOME=/tmp/pr-openclaw` redirige tanto
+log como workspaces. Contrato completo en
+[`docs/OPENCLAW_BETA0_SPEC.md`](docs/OPENCLAW_BETA0_SPEC.md).
 
 ## Roadmap (resumen)
 
