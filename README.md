@@ -380,6 +380,17 @@ Cada `run` genera/actualiza:
 
   Una línea por `claw run` permitido. `watson ws plan-index <modo>`
   lo imprime (`Sin índice de planes.` si todavía no hubo runs).
+- Búsqueda y listado rápido sobre el índice:
+
+  ```bash
+  watson ws recent desarrollo               # últimos 5 (default)
+  watson ws recent desarrollo 10            # últimos N
+  watson ws search desarrollo "clase"       # case-insensitive, fixed-string
+  ```
+
+  Formato de salida: `timestamp | filename | task` (sin la columna
+  modo, que ya viene en la query). `recent` y `search` solo leen
+  `index.tsv`; sin red, sin herramientas externas.
 - `~/.patrick-os/openclaw/openclaw.log` — log append-only,
   `timestamp | mode=... | dry-run | task=...`.
 - `~/.patrick-os/openclaw/audit.log` — bitácora estructurada (ver
