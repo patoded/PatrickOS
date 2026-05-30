@@ -271,7 +271,12 @@ watson audit            # alias: aud — últimas 20 (default = tail)
 watson audit list       # log completo
 watson audit tail       # últimas 20
 watson audit path       # imprime ruta del archivo
+watson audit summary    # conteo por evento (kill / unkill / run_allowed / ...)
 ```
+
+`watson doctor` corre un smoke del audit log: tras el `claw run` de
+prueba verifica que `audit.log` se creó y que `audit summary` corre
+contra él.
 
 Eventos registrados: `status`, `policy`, `kill`, `unkill`,
 `run_allowed`, `run_blocked_kill_switch`, `run_blocked_policy`,

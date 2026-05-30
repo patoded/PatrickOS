@@ -202,6 +202,30 @@ run_diagnostic() {
     fi
     echo
 
+    # 8) Audit smoke. El smoke anterior debería haber escrito al
+    # audit.log; si el archivo no apareció, OpenClaw no auditó bien.
+    # Después corremos 'summary' para verificar que el reader funciona
+    # end-to-end y mostramos las primeras líneas como evidencia.
+    echo "--- audit smoke ---"
+    audit_script="$script_dir/openclaw-audit.sh"
+    audit_file="$SANDBOX/openclaw/audit.log"
+    if [ ! -f "$audit_file" ]; then
+        fail "audit.log no existe en $audit_file (OpenClaw smoke debería haberlo creado)"
+    elif [ ! -x "$audit_script" ]; then
+        warn "openclaw-audit.sh no presente o sin +x en $script_dir"
+    else
+        sum_out="$(PATRICK_OS_HOME="$SANDBOX" "$audit_script" summary 2>&1)"
+        sum_rc=$?
+        if [ "$sum_rc" -eq 0 ]; then
+            ok "audit summary OK ($audit_file)"
+            echo "$sum_out" | head -n 4 | sed 's/^/    /'
+        else
+            fail "audit summary falló (exit=$sum_rc)"
+            show_tail "$sum_out"
+        fi
+    fi
+    echo
+
     echo "Resumen: OK=$ok_count WARN=$warn_count FAIL=$fail_count"
 }
 
