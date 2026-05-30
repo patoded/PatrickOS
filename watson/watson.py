@@ -23,6 +23,7 @@ _ALIAS_MAP = {
     "ia": "modo ia",
     "ask": "preguntar ia",
     "claw": "openclaw",
+    "ws": "workspace",
     "n": "nota",
     "ns": "notas",
     "note": "nota",
@@ -48,6 +49,7 @@ _ALIAS_MAP = {
 # normaliza el primer token vía _ALIAS_MAP, así no duplicamos dispatch.
 _PAYLOAD_PREFIXES = (
     "preguntar ia",
+    "workspace",
     "openclaw",
     "note",
     "nota",
@@ -55,6 +57,7 @@ _PAYLOAD_PREFIXES = (
     "tarea",
     "claw",
     "ask",
+    "ws",
     "n",
     "t",
 )
@@ -91,6 +94,10 @@ def mostrar_ayuda():
     print("  openclaw (claw)            status del runtime (Beta-0 dry-run)")
     print("  claw run \"tarea\"           plan dry-run (sin ejecutar nada)")
     print("  claw run --mode <m> \"...\"  dry-run en workspace por modo")
+    print("  workspace list (ws)        lista workspaces locales por modo")
+    print("  workspace init <modo>      crea workspace + README local")
+    print("  workspace clean <m> --yes  vacía workspace (requiere --yes)")
+    print("  workspace path <modo>      imprime ruta absoluta del workspace")
     print("  nota \"texto\" (n, note)     guarda nota rápida local")
     print("  notas (ns, notes)          lista las últimas 20 notas")
     print("  tarea \"texto\" (t, todo)    agrega tarea pendiente")
@@ -110,6 +117,9 @@ def mostrar_ayuda():
     print("  watson ask \"resume PatrickOS\"")
     print("  watson dev")
     print("  watson claw run \"prepara un plan\"")
+    print("  watson ws list")
+    print("  watson ws init desarrollo")
+    print("  watson ws path desarrollo")
 
 
 def mostrar_version():
@@ -193,6 +203,17 @@ def ejecutar_comando(comando, pregunta=None):
         else:
             args = pregunta.split()
             ejecutar_seguro([script, *args], f"openclaw-stub.sh {args[0]}")
+
+    elif comando == "workspace":
+        # workspace.sh: list / init / clean / path. Mismo patrón que
+        # openclaw: split por espacios y pasar al script, que valida
+        # subcomando, modo y flags (--yes en clean).
+        script = str(SCRIPTS_DIR / "workspace.sh")
+        if pregunta is None or not pregunta.strip():
+            ejecutar_seguro([script], "workspace.sh")
+        else:
+            args = pregunta.split()
+            ejecutar_seguro([script, *args], f"workspace.sh {args[0]}")
 
     elif comando == "nota":
         if pregunta is None or not pregunta.strip():

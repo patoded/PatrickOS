@@ -183,6 +183,30 @@ Secciones (todas locales, sin red):
 Hereda `PATRICK_OS_NOTES_DIR` y `PATRICK_OS_TODOS_DIR` al delegar en
 `daily.sh`, así que el sandbox de notas/tareas funciona igual.
 
+## Workspaces locales
+
+Gestión simple de directorios de trabajo por modo. Es la base concreta
+del aislamiento por modo que pide OpenClaw Beta-0: `claw run --mode <m>`
+delega aquí la creación del workspace antes de escribir su plan.
+
+```bash
+watson ws list                       # alias de workspace
+watson ws init desarrollo
+watson ws path desarrollo
+watson ws clean desarrollo           # bloqueado sin --yes
+watson ws clean desarrollo --yes     # vacía y recrea README.md
+```
+
+Modos permitidos: `consulta`, `clase`, `video`, `desarrollo`, `ia`,
+`general`. Cualquier otro → exit 1.
+
+Cada workspace vive en `~/.patrick-os/workspaces/<modo>/` con un
+`README.md` con el modo y la fecha de creación. `init` es idempotente:
+si ya hay README, no lo sobrescribe (las ediciones del usuario se
+respetan). `clean --yes` borra todo el contenido y recrea el README;
+sin `--yes` solo imprime cómo confirmar y sale en 1. Sandbox vía
+`PATRICK_OS_HOME=/tmp/...` (mismo override que usa `claw`).
+
 ## OpenClaw: stub seguro
 
 Watson tiene cableado el comando `openclaw` (alias `claw`) como **stub
