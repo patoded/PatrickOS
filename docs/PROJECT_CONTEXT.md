@@ -32,11 +32,14 @@ PatrickOS ya tiene una primera Alpha publicada:
 queda como decisión separada (ver `docs/V0.2_ALPHA_CHECKLIST.md` y
 `scripts/release-checklist.sh v0.2.0-alpha`).
 
-Ciclo actual: **`v0.3.0-alpha` en preflight**. Watson reporta
-`v0.3.0-alpha`; código + docs cerrados, OpenClaw Beta-0 cerrado
-como capa dry-run segura (ver `docs/OPENCLAW_BETA0_CHECKLIST.md`).
-**Siguiente paso: construir ISO `v0.3.0-alpha`** en un PR aparte
-una vez validado `scripts/release-checklist.sh v0.3.0-alpha`.
+`v0.3.0-alpha` publicado (código + docs + ISO). Ciclo actual:
+**`v0.4.0-dev` iniciado**. Watson reporta `v0.4.0-dev`. Foco:
+**planning de OpenClaw Beta-1** — tool contracts accionables,
+allowlist concreta, sandbox de proceso, filesystem boundaries,
+human confirmation gate y negative tests. **Ejecución real sigue
+NO habilitada**; OpenClaw Beta-0 sigue como capa dry-run cerrada
+mientras Beta-1 se diseña. Ver `docs/V0.4_PLAN.md`,
+`docs/OPENCLAW_BETA1_PLAN.md` y `docs/OPENCLAW_NEGATIVE_TESTS.md`.
 
 La Alpha incluye:
 
@@ -292,10 +295,10 @@ Regla: no hacer PR manual desde navegador salvo emergencia.
 
 ## Próximos pasos inmediatos
 
-1. Mergear el PR de preflight v0.3.0-alpha (este).
-2. Construir ISO `v0.3.0-alpha` en un PR aparte, una vez que `scripts/release-checklist.sh v0.3.0-alpha` quede sin FAILs (TODOs de ISO/tag son esperados hasta ese build).
-3. Tagear `v0.3.0-alpha` cuando la ISO esté lista y validada.
-4. Recién después abrir Beta-1 de OpenClaw (primera herramienta whitelisted, todavía sin red ni sudo; requiere los controles del modelo de seguridad: sandbox real, allowlist concreta, confirmación humana por step, FS boundaries, negative tests).
+1. Avanzar las fases de `docs/OPENCLAW_BETA1_PLAN.md` por PRs chicos (validador de tool contracts → allowlist candidata → diseño de sandbox → FS boundaries → confirmation gate → negative tests → simulated execution).
+2. Cada PR mantiene: `make check fails=0`, `policy check OK`, `tools list` vacío, `claw execute` aprobado → `blocked-by-design`, sin tocar `iso/`.
+3. Beta-1 (primera herramienta habilitada) **no** se abre hasta que el criterio en `V0.4_PLAN.md` esté completo.
+4. La ISO `v0.4` se evalúa al cierre, igual que en v0.3.
 
 ## Próximo foco: v0.3 / OpenClaw Beta-0
 
