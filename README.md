@@ -79,6 +79,8 @@ Detalles de diseño en [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
 Contexto del proyecto: [`docs/PROJECT_CONTEXT.md`](docs/PROJECT_CONTEXT.md).
 Checklist v0.2.0-alpha: [`docs/V0.2_ALPHA_CHECKLIST.md`](docs/V0.2_ALPHA_CHECKLIST.md).
 Release notes v0.2.0-alpha: [`docs/RELEASE_NOTES_v0.2.0-alpha.md`](docs/RELEASE_NOTES_v0.2.0-alpha.md).
+Plan v0.3: [`docs/V0.3_PLAN.md`](docs/V0.3_PLAN.md).
+Spec OpenClaw Beta-0: [`docs/OPENCLAW_BETA0_SPEC.md`](docs/OPENCLAW_BETA0_SPEC.md).
 
 ## Validar antes de publicar v0.2.0-alpha
 
