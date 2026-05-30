@@ -32,6 +32,8 @@ Uso:
   workspace.sh last-plan <modo>
   workspace.sh show-plan <modo> <archivo|latest>
   workspace.sh plan-index <modo>
+  workspace.sh recent <modo> [n]
+  workspace.sh search <modo> <texto>
 
 Modos permitidos: consulta, clase, video, desarrollo, ia, general
 EOF
@@ -170,6 +172,52 @@ case "$cmd" in
             exit 0
         fi
         cat "$idx"
+        ;;
+    recent)
+        mode="${1:-}"
+        require_mode "$mode"
+        shift || true
+        n="${1:-5}"
+        if ! [[ "$n" =~ ^[0-9]+$ ]]; then
+            echo "Error: n debe ser entero. Recibido: '$n'." >&2
+            exit 1
+        fi
+        idx="$WORKSPACES_DIR/$mode/plans/index.tsv"
+        if [ ! -f "$idx" ]; then
+            echo "Sin planes."
+            exit 0
+        fi
+        # Reformatear las últimas N entradas del índice TSV:
+        # timestamp | filename | task   (omitimos el modo: redundante).
+        tail -n "$n" "$idx" | awk -F'\t' '{printf "%s | %s | %s\n", $1, $3, $4}'
+        ;;
+    search)
+        mode="${1:-}"
+        require_mode "$mode"
+        shift || true
+        needle="${*:-}"
+        needle="${needle#"${needle%%[![:space:]]*}"}"
+        needle="${needle%"${needle##*[![:space:]]}"}"
+        if [ -z "$needle" ]; then
+            echo "Error: falta texto a buscar. Uso: workspace.sh search <modo> <texto>" >&2
+            exit 1
+        fi
+        idx="$WORKSPACES_DIR/$mode/plans/index.tsv"
+        if [ ! -f "$idx" ]; then
+            echo "Sin coincidencias."
+            exit 0
+        fi
+        # grep -iF: case-insensitive, fixed-string (sin regex; el
+        # needle puede contener . * etc. sin sorpresas). -- corta
+        # opciones por si el usuario busca algo que arranca con '-'.
+        # || true porque grep retorna 1 sin matches y no queremos
+        # tumbar el script.
+        matches=$(grep -iF -- "$needle" "$idx" || true)
+        if [ -z "$matches" ]; then
+            echo "Sin coincidencias."
+            exit 0
+        fi
+        echo "$matches" | awk -F'\t' '{printf "%s | %s | %s\n", $1, $3, $4}'
         ;;
     show-plan)
         mode="${1:-}"

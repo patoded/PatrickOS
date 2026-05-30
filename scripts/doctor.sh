@@ -234,6 +234,23 @@ run_diagnostic() {
         fail "plan viewer (last-plan rc=$lp_rc, show-plan rc=$sp_rc)"
         show_tail "$lp_out"
     fi
+
+    # Plan search smoke: 'recent' debe listar ≥1 línea con la task del
+    # smoke ('doctor smoke') y 'search' debe encontrarla. Si alguno
+    # falla, FAIL.
+    rec_out="$(PATRICK_OS_HOME="$SANDBOX" "$ws_script" recent desarrollo 2>&1)"
+    rec_rc=$?
+    srch_out="$(PATRICK_OS_HOME="$SANDBOX" "$ws_script" search desarrollo "doctor smoke" 2>&1)"
+    srch_rc=$?
+    if [ "$rec_rc" -eq 0 ] && [ "$srch_rc" -eq 0 ] \
+       && echo "$rec_out" | grep -q "doctor smoke" \
+       && echo "$srch_out" | grep -q "doctor smoke"; then
+        ok "plan search (recent + search)"
+    else
+        fail "plan search (recent rc=$rec_rc, search rc=$srch_rc)"
+        show_tail "$rec_out"
+        show_tail "$srch_out"
+    fi
     echo
 
     # 8) Audit smoke. El smoke anterior debería haber escrito al
