@@ -86,6 +86,16 @@ case "$cmd" in
         require_line "tool_whitelist: []"    '^tool_whitelist:[[:space:]]*\[\][[:space:]]*$'
         require_line "kill_switch: true"     '^kill_switch:[[:space:]]+true[[:space:]]*$'
 
+        # Kill switch local: independiente de la policy YAML. La policy
+        # describe lo que DEBERÍA ser; el kill switch es una pausa
+        # táctica del usuario. Lo reportamos como [INFO] para que se vea
+        # en el log, pero no cuenta como FAIL — la policy puede seguir
+        # siendo válida con el sistema pausado.
+        ks="${PATRICK_OS_HOME:-$HOME/.patrick-os}/openclaw/KILL_SWITCH"
+        if [ -f "$ks" ]; then
+            echo "[INFO] KILL_SWITCH activo: $ks (OpenClaw run está bloqueado por el usuario)"
+        fi
+
         echo
         if [ "$fail" -gt 0 ]; then
             echo "Resultado: FAIL ($fail invariante/s rota/s). NO ejecutar OpenClaw run hasta corregir." >&2

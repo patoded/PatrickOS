@@ -22,6 +22,7 @@ set -euo pipefail
 OS_HOME="${PATRICK_OS_HOME:-$HOME/.patrick-os}"
 LOG_DIR="$OS_HOME/openclaw"
 LOG_FILE="$LOG_DIR/openclaw.log"
+KILL_SWITCH="$LOG_DIR/KILL_SWITCH"
 WORKSPACES_DIR="$OS_HOME/workspaces"
 ALLOWED_MODES=(consulta clase video desarrollo ia general)
 
@@ -31,6 +32,11 @@ print_status() {
     echo "Modo seguro: sin ejecución de herramientas"
     echo "Beta-0 dry-run disponible: openclaw-stub.sh run \"tarea\""
     echo "Próximo paso: integrar runtime aislado con whitelist"
+    if [ -f "$KILL_SWITCH" ]; then
+        echo "KILL_SWITCH: activo ($KILL_SWITCH)"
+    else
+        echo "KILL_SWITCH: inactivo"
+    fi
 }
 
 usage() {
@@ -39,6 +45,9 @@ Uso:
   openclaw-stub.sh status
   openclaw-stub.sh run "tarea"
   openclaw-stub.sh run --mode <modo> "tarea"
+  openclaw-stub.sh kill ["razón"]
+  openclaw-stub.sh unkill
+  openclaw-stub.sh policy [show|path|check]
 
 Modos permitidos: consulta, clase, video, desarrollo (default), ia, general
 EOF
@@ -58,6 +67,33 @@ shift || true
 case "$cmd" in
     status|"")
         print_status
+        exit 0
+        ;;
+    kill)
+        # Crea el archivo KILL_SWITCH. Si hay args, los junta y guarda
+        # como 'reason'. Idempotente: pisar es válido (refresh del
+        # timestamp/razón).
+        mkdir -p "$LOG_DIR"
+        razon="${*:-}"
+        razon="${razon#"${razon%%[![:space:]]*}"}"
+        razon="${razon%"${razon##*[![:space:]]}"}"
+        ts="$(date '+%Y-%m-%d %H:%M:%S')"
+        if [ -z "$razon" ]; then
+            printf 'killed_at: %s\n' "$ts" > "$KILL_SWITCH"
+        else
+            printf 'killed_at: %s\nreason: %s\n' "$ts" "$razon" > "$KILL_SWITCH"
+        fi
+        echo "KILL_SWITCH activado: $KILL_SWITCH"
+        [ -n "$razon" ] && echo "Razón: $razon"
+        exit 0
+        ;;
+    unkill)
+        if [ -f "$KILL_SWITCH" ]; then
+            rm -f "$KILL_SWITCH"
+            echo "KILL_SWITCH desactivado: $KILL_SWITCH"
+        else
+            echo "KILL_SWITCH ya estaba inactivo ($KILL_SWITCH)."
+        fi
         exit 0
         ;;
     policy)
@@ -97,6 +133,16 @@ case "$cmd" in
         if [ -z "$tarea" ]; then
             echo "Error: tarea vacía." >&2
             usage >&2
+            exit 1
+        fi
+
+        # Kill switch local: si el archivo KILL_SWITCH existe, ningún
+        # run sale — ni siquiera dry-run. Es la pausa táctica del usuario
+        # y gana sobre la policy y sobre todo lo demás. Se desactiva con
+        # 'openclaw-stub.sh unkill'.
+        if [ -f "$KILL_SWITCH" ]; then
+            echo "OpenClaw bloqueado por KILL_SWITCH" >&2
+            echo "Archivo: $KILL_SWITCH" >&2
             exit 1
         fi
 

@@ -253,6 +253,25 @@ respetan). `clean --yes` borra todo el contenido y recrea el README;
 sin `--yes` solo imprime cómo confirmar y sale en 1. Sandbox vía
 `PATRICK_OS_HOME=/tmp/...` (mismo override que usa `claw`).
 
+## OpenClaw kill switch
+
+Pausa táctica del usuario sobre OpenClaw. Materializada como un archivo
+local en `~/.patrick-os/openclaw/KILL_SWITCH` (respeta `PATRICK_OS_HOME`).
+Mientras el archivo exista, **ningún `claw run` se ejecuta** — ni
+siquiera el dry-run. Gana sobre la policy: aunque el YAML sea seguro,
+el switch bloquea.
+
+```bash
+watson claw kill "pausa de seguridad"   # crea el archivo con razón
+watson claw kill                        # crea el archivo sin razón
+watson claw status                      # muestra estado del switch
+watson claw unkill                      # borra el archivo
+```
+
+`policy check` sigue pasando con el switch activo (no es una falla
+de la policy) pero reporta `[INFO] KILL_SWITCH activo`.
+`watson validar` lo levanta como `WARN` cada vez que corre.
+
 ## OpenClaw policy layer
 
 Antes de cualquier dry-run, OpenClaw consulta una policy local
