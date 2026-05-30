@@ -1,9 +1,26 @@
 # OpenClaw Beta-0 — Spec
 
-Estado: **propuesta**. Este documento describe el contrato de la primera
-beta de OpenClaw dentro de PatrickOS. **OpenClaw runtime real sigue NO
-implementado.** Beta-0 entrega únicamente el camino seguro y el dry-run;
-el motor que ejecuta herramientas reales llega después.
+Estado: **implementado en modo dry-run**. Esta entrega cubre todo el
+camino seguro (gates, audit, plan history, approval, execution gate)
+sin ejecutar ninguna herramienta real. El runtime de ejecución **sigue
+NO implementado** y, por diseño, ningún comando lo dispara en Beta-0.
+
+Aclaraciones explícitas y verificables:
+
+- **`watson claw run`** escribe un plan markdown y nada más. No corre
+  herramientas, no llama a binarios externos, no toca red, no escala
+  privilegios.
+- **`watson ws approve-plan` NO ejecuta nada.** Solo escribe un sidecar
+  local `<plan>.state` con `status=approved`. Cambiar de decisión es
+  re-aprobar/rechazar; sobrescribe.
+- **`watson claw execute` NO ejecuta nada en Beta-0.** Corre la cadena
+  completa de gates (kill switch, policy, aprobación). Si todos pasan,
+  imprime `Estado: blocked-by-design` y sale en 1. Es el harness para
+  cuando Beta-1 conecte un runtime real.
+
+Documento hermano: [`OPENCLAW_SAFETY_MODEL.md`](OPENCLAW_SAFETY_MODEL.md)
+describe el modelo de amenazas, los controles actuales y los que faltan
+antes de habilitar ejecución real.
 
 ## Roles
 
@@ -11,94 +28,248 @@ el motor que ejecuta herramientas reales llega después.
   Recibe comandos, valida permisos, decide si una operación puede
   delegarse, y traduce la respuesta de OpenClaw en algo presentable.
   Es el único que habla con el usuario.
-- **OpenClaw** = motor agéntico futuro. Recibe una tarea acotada
-  desde Watson, propone un plan y (cuando exista runtime real)
-  ejecuta herramientas dentro de un sandbox.
+- **OpenClaw** = motor agéntico futuro. En Beta-0 se materializa como
+  `scripts/openclaw-stub.sh`, que genera planes y valida gates. Cuando
+  exista runtime real, llega encerrado en el mismo contrato.
 
 OpenClaw nunca habla con el usuario directo. Watson nunca ejecuta
 herramientas del motor agéntico fuera del contrato de Beta-0.
 
-## Comunicación
+## Modos permitidos
 
-- **Transporte:** stdin/stdout, o socket UNIX en `~/.patrick-os/run/openclaw.sock`.
-  **Nada de TCP**, ni siquiera localhost.
-- **Modelo de proceso:** OpenClaw es **subproceso** lanzado por Watson
-  por invocación. **No es daemon**, no queda corriendo en background,
-  no se autoarranca al boot.
-- **Formato:** JSON línea-a-línea (`ndjson`) para que sea trivial
-  loggear y diffear. Sin frameworks de RPC.
-- **Timeout:** cada invocación tiene timeout duro (default conservador,
-  ej. 30 s para Beta-0); si vence, Watson mata el subproceso.
+`consulta`, `clase`, `video`, `desarrollo`, `ia`, `general`. Cualquier
+otro modo se rechaza con exit 1.
 
-## Aislamiento
+## Layout en disco
 
-- **Workspace permitido:** `~/.patrick-os/workspaces/<modo>/`.
-  OpenClaw solo puede leer/escribir dentro de su workspace de modo
-  (`dev`, `consulta`, `clase`, `video`, etc.). Cualquier path fuera
-  se rechaza desde Watson antes de pasar el request.
-- **Whitelist de herramientas:** **vacía por defecto.** En Beta-0 no
-  hay ninguna herramienta habilitada de fábrica. Habilitar una
-  herramienta es un cambio de código revisado, no un toggle en
-  config de usuario.
-- **Sin `sudo`.** OpenClaw corre como el mismo usuario que Watson y
-  nunca puede escalar privilegios. Watson rechaza cualquier request
-  que requiera root.
-- **Sin red por defecto.** Beta-0 no expone ninguna herramienta de
-  red. Cuando exista una en el futuro, requiere whitelist explícita
-  por host.
-- **Sin plugins externos.** No se cargan binarios, scripts ni paquetes
-  desde fuera del repo PatrickOS. No hay mecanismo de descubrimiento
-  ni de auto-install.
-- **Sin marketplace.** No existe, no se va a existir como parte de
-  esta línea de producto.
+Todo bajo `$PATRICK_OS_HOME` (default `~/.patrick-os`):
 
-## Observabilidad
-
-- **Logs mínimos** en `~/.patrick-os/logs/openclaw.log`:
-  timestamp, comando recibido, modo, decisión (`accepted` /
-  `rejected` / `dry-run`), duración, exit code. **Sin** stdout/stderr
-  de las herramientas en Beta-0 (no hay herramientas todavía).
-- Sin telemetría remota. Nunca.
-
-## Kill switch
-
-- **Kill switch local** vía archivo: si existe
-  `~/.patrick-os/openclaw.disabled`, Watson rechaza cualquier
-  invocación a OpenClaw con un mensaje claro y exit code no-cero.
-  El archivo lo crea/borra el usuario a mano. Sin daemon, sin
-  servicio, sin reinicios.
-
-## Comando propuesto
-
-```bash
-watson claw run "tarea"
+```
+~/.patrick-os/
+├── openclaw/
+│   ├── openclaw.log           legacy log de run permitidos
+│   ├── audit.log              bitácora estructurada de eventos
+│   └── KILL_SWITCH            (si existe → run/execute bloqueados)
+└── workspaces/<modo>/
+    ├── README.md              creado por workspace.sh init
+    ├── last-plan.md           último plan dry-run
+    └── plans/
+        ├── <YYYYMMDD-HHMMSS>-plan.md     historial inmutable
+        ├── <YYYYMMDD-HHMMSS>-plan.md.state (sidecar opcional)
+        └── index.tsv          índice append-only de runs permitidos
 ```
 
-En **Beta-0**:
+`configs/openclaw-policy.yaml` define la policy local; vive en el repo
+y se copia a `/usr/local/share/patrick-os/configs/` al instalar.
 
-- `watson claw run "..."` arranca OpenClaw como subproceso, le pasa
-  la tarea, recibe un **plan** (lista de pasos propuestos) y lo
-  imprime.
-- **No ejecuta herramientas reales.** El modo efectivo es `dry-run`
-  / `plan-only`. Cualquier paso del plan se imprime como "would
-  run", nunca se corre.
-- `watson claw` (sin `run`) sigue siendo el stub actual mientras el
-  contrato no esté en código.
+## Cadena de gates
 
-## Lo que Beta-0 deja afuera (explícito)
+Los gates son la capa de seguridad concreta de Beta-0. Cada uno emite
+un evento auditable. Orden de evaluación (primero que dispara gana):
 
-- Ejecución de herramientas reales.
-- Memoria persistente entre invocaciones más allá del workspace.
-- Acceso a `~/.patrick-os/notes/` y `~/.patrick-os/todos/` desde
-  OpenClaw (Watson sigue siendo el único que toca esos archivos).
-- Multi-step autónomo: en Beta-0 cada invocación es un único
-  round-trip plan-only.
-- UI gráfica de cualquier tipo.
+1. **Basename estricto** en cualquier comando que reciba `<filename>`
+   (`show-plan`, `approve-plan`, `reject-plan`, `plan-status`,
+   `execute`). Si el nombre contiene `/` o `..` → exit 1 antes de
+   tocar el FS.
+2. **KILL_SWITCH local** (`$PATRICK_OS_HOME/openclaw/KILL_SWITCH`).
+   Si el archivo existe, `claw run` y `claw execute` abortan. El
+   switch lo crea/borra el usuario con `watson claw kill ["razón"]`
+   y `watson claw unkill`. El sidecar contiene `killed_at` y `reason`
+   opcional. Eventos: `run_blocked_kill_switch`,
+   `execute_blocked_kill_switch`.
+3. **Policy gate** (`configs/openclaw-policy.yaml`). `openclaw-policy.sh
+   check` valida seis invariantes:
+   - `network: disabled`
+   - `sudo: disabled`
+   - `plugins: disabled`
+   - `marketplace: disabled`
+   - `tool_whitelist: []`
+   - `kill_switch: true`
+
+   Cualquier desviación → FAIL exit 1. Eventos: `run_blocked_policy`,
+   `execute_blocked_policy`.
+4. **Aprobación local** (solo `execute`). Lee `<plan>.state` y exige
+   `status=approved` exacto. Si falta o difiere, imprime hint
+   copy-paste con `watson ws approve-plan <modo> <file>`. Evento:
+   `execute_missing_approval`.
+5. **Blocked-by-design** (`execute` cuando todos los gates pasan).
+   Beta-0 no tiene runtime: imprime `Estado: blocked-by-design`, exit
+   1. Evento: `execute_blocked_beta0`.
+
+Para `run` además se rechaza:
+
+- Modo no permitido → `run_invalid_mode`, exit 1.
+- Tarea vacía → `run_empty_task`, exit 1.
+
+## Plans
+
+### Formato markdown
+
+Cada `claw run` permitido escribe `last-plan.md` y una copia en
+`plans/<YYYYMMDD-HHMMSS>-plan.md`. El contenido es markdown
+estructurado:
+
+```markdown
+# OpenClaw Dry Run Plan
+
+## Metadata
+Fecha: YYYY-MM-DD HH:MM:SS
+Modo: <modo>
+Workspace: <path>
+Tag: <tag>
+Priority: <low|normal|high>
+Policy: OK
+Tool whitelist: empty
+Kill switch: disabled
+
+## Tarea solicitada
+<texto>
+
+## Interpretación
+<texto>          # literal: sin LLM en este path
+
+## Plan propuesto
+1. Revisar contexto local permitido.
+2. Definir pasos seguros.
+3. Confirmar antes de cualquier ejecución real futura.
+
+## Herramientas
+- Permitidas: ninguna
+- Red: deshabilitada
+- Sudo: deshabilitado
+- Plugins: deshabilitados
+- Marketplace: deshabilitado
+
+## Estado
+Dry-run. Nada ejecutado.
+```
+
+### Metadata: tags y priority
+
+- `--tag <tag>` default `general`. Debe matchear `^[A-Za-z0-9_-]+$`;
+  cualquier otro carácter → exit 1.
+- `--priority low|normal|high` default `normal`. Fuera del enum → exit 1.
+
+### Índice TSV
+
+`plans/index.tsv` es append-only, una línea por `run_allowed`:
+
+```
+timestamp \t mode \t filename \t tag \t priority \t task
+```
+
+`task` se sanitiza contra tabs/newlines/CR antes de escribir.
+
+### Sidecar de aprobación
+
+`<plan>.state` (creado por `approve-plan` / `reject-plan`):
+
+```
+status=approved|rejected
+timestamp=YYYY-MM-DD HH:MM:SS
+reason=<texto opcional>
+```
+
+Planes sin sidecar se reportan como `status=pending` en los listados.
+
+## Comandos disponibles
+
+### Watson (Beta-0)
+
+```
+# Estado y policy
+watson claw status
+watson policy [show|path|check]   (alias: pol)
+watson claw policy
+
+# Kill switch
+watson claw kill ["razón"]
+watson claw unkill
+
+# Run dry-run
+watson claw run [--mode <m>] [--tag <t>] [--priority <p>] "tarea"
+
+# Execution gate (siempre blocked-by-design en Beta-0)
+watson claw execute --mode <m> <basename>
+
+# Plans: histórico y visualización
+watson ws plans <modo>
+watson ws plan-index <modo>
+watson ws last-plan <modo>
+watson ws show-plan <modo> <archivo|latest>
+
+# Plans: búsqueda y filtrado
+watson ws recent <modo> [n]
+watson ws search <modo> <texto>
+watson ws filter-tag <modo> <tag>
+watson ws filter-priority <modo> <low|normal|high>
+
+# Plans: aprobación local
+watson ws approve-plan <modo> <basename>
+watson ws reject-plan <modo> <basename> [razón]
+watson ws plan-status <modo> <basename>
+
+# Audit log
+watson audit [list|tail|path|summary]   (alias: aud)
+```
+
+### Eventos auditados
+
+`openclaw-audit.sh summary` lista el catálogo completo con counters:
+
+```
+kill, unkill,
+run_allowed, run_blocked_kill_switch, run_blocked_policy,
+run_invalid_mode, run_empty_task,
+execute_blocked_beta0, execute_blocked_kill_switch,
+execute_blocked_policy, execute_missing_approval,
+status, policy
+```
+
+Formato de cada línea de `audit.log`:
+
+```
+YYYY-MM-DD HH:MM:SS | event=<evento> | mode=<modo|-> | result=<ok|blocked|fail|info> | detail=<texto>
+```
+
+## Diagnóstico
+
+`watson doctor` corre, entre otras secciones, smokes end-to-end de
+todo lo anterior:
+
+- `--- openclaw dry-run smoke ---` exige `last-plan.md`, `plans/`
+  con ≥1 archivo y `index.tsv` con la metadata tag/priority del run.
+- `--- audit smoke ---` exige `audit.log` con eventos y verifica
+  que `audit summary` corre.
+- Plan viewer (`last-plan` + `show-plan latest`).
+- Plan search (`recent` + `search` + `filter-tag` + `filter-priority`).
+- Plan approval + execution gate end-to-end:
+  pending → execute (missing approval) → approve → approved →
+  execute → blocked-by-design.
+
+## Intención original NO implementada en Beta-0
+
+El spec inicial mencionaba estos puntos como contrato futuro. Beta-0
+no los necesita (no hay runtime); quedan documentados para Beta-1+:
+
+- **Transporte por socket UNIX o stdin/stdout con framing JSON
+  ndjson.** En Beta-0 todo es bash subprocess + archivos en disco.
+  Cuando OpenClaw sea un proceso separado con un runtime real, se
+  vuelve relevante.
+- **Timeout duro por invocación.** No aplica al stub.
+- **OpenClaw como subproceso lanzado por Watson.** Hoy es un script
+  invocado por Watson; el modelo "proceso separado" es el mismo
+  conceptualmente pero sin un runtime distinto.
+
+Cualquier cambio a este contrato (red, sudo, plugins, marketplace,
+o transporte) requiere PR explícitamente etiquetado, revisión y
+actualización de este documento + del modelo de seguridad.
 
 ## Cuándo pasa a Beta-1
 
-Beta-1 (no en v0.3) podrá empezar a habilitar herramientas
-**una por una** con whitelist explícita, dentro del mismo contrato
-de transporte / aislamiento / kill switch que define Beta-0. Si el
-contrato necesita cambiar para Beta-1, se hace en un PR separado
-con su propia revisión.
+Beta-1 (no en v0.3) podrá empezar a habilitar herramientas **una
+por una** con whitelist explícita, dentro del mismo contrato de
+gates / aislamiento / kill switch que define Beta-0. Antes de
+prender la primera herramienta, los controles adicionales del
+[modelo de seguridad](OPENCLAW_SAFETY_MODEL.md) tienen que estar
+en código.

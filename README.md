@@ -119,6 +119,7 @@ Checklist v0.2.0-alpha: [`docs/V0.2_ALPHA_CHECKLIST.md`](docs/V0.2_ALPHA_CHECKLI
 Release notes v0.2.0-alpha: [`docs/RELEASE_NOTES_v0.2.0-alpha.md`](docs/RELEASE_NOTES_v0.2.0-alpha.md).
 Plan v0.3: [`docs/V0.3_PLAN.md`](docs/V0.3_PLAN.md).
 Spec OpenClaw Beta-0: [`docs/OPENCLAW_BETA0_SPEC.md`](docs/OPENCLAW_BETA0_SPEC.md).
+Modelo de seguridad OpenClaw: [`docs/OPENCLAW_SAFETY_MODEL.md`](docs/OPENCLAW_SAFETY_MODEL.md).
 Release notes v0.3.0-alpha: [`docs/RELEASE_NOTES_v0.3.0-alpha.md`](docs/RELEASE_NOTES_v0.3.0-alpha.md).
 Checklist v0.3.0-alpha: [`docs/V0.3_ALPHA_CHECKLIST.md`](docs/V0.3_ALPHA_CHECKLIST.md).
 
