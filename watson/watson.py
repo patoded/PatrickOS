@@ -52,12 +52,14 @@ _PAYLOAD_PREFIXES = (
     "preguntar ia",
     "workspace",
     "openclaw",
+    "doctor",
     "note",
     "nota",
     "todo",
     "tarea",
     "claw",
     "ask",
+    "doc",
     "ws",
     "n",
     "t",
@@ -107,6 +109,7 @@ def mostrar_ayuda():
     print("  diario (d, daily)          resumen del día (notas + tareas)")
     print("  inicio (i, home, panel)    panel rápido WatsonOS (estado + daily + atajos)")
     print("  doctor (doc)               diagnóstico integral (repo + global + smokes)")
+    print("  doctor repair              diagnóstico + sudo install + re-check")
     print("  modo consulta              flujo clínico")
     print("  modo clase                 flujo docente")
     print("  modo video                 flujo de edición")
@@ -123,6 +126,7 @@ def mostrar_ayuda():
     print("  watson ws init desarrollo")
     print("  watson ws path desarrollo")
     print("  watson doctor")
+    print("  watson doctor repair")
 
 
 def mostrar_version():
@@ -208,10 +212,16 @@ def ejecutar_comando(comando, pregunta=None):
             ejecutar_seguro([script, *args], f"openclaw-stub.sh {args[0]}")
 
     elif comando == "doctor":
-        # Diagnóstico integral: corre el doctor.sh que captura git
-        # status, make check, check-installed, watson version/validar y
-        # smokes de workspace + openclaw. Sin red, sin sudo.
-        ejecutar_seguro([str(SCRIPTS_DIR / "doctor.sh")], "doctor.sh")
+        # Sin payload = diagnóstico puro. Con payload ("repair" /
+        # "--repair") se forwardea al script, que valida el subcomando
+        # y dispara el flujo de reparación (sudo install + re-check).
+        # Sólo el subcomando 'repair' usa sudo; el default no.
+        script = str(SCRIPTS_DIR / "doctor.sh")
+        if pregunta is None or not pregunta.strip():
+            ejecutar_seguro([script], "doctor.sh")
+        else:
+            args = pregunta.split()
+            ejecutar_seguro([script, *args], f"doctor.sh {args[0]}")
 
     elif comando == "workspace":
         # workspace.sh: list / init / clean / path. Mismo patrón que

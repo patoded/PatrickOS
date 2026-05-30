@@ -57,13 +57,22 @@ global en sync, `watson version/validar`, y smokes de workspace +
 OpenClaw dry-run) usá:
 
 ```bash
-watson doctor       # alias: doc
+watson doctor          # alias: doc
 # o:  make doctor
 ```
 
 Reporta `[OK]/[WARN]/[FAIL]` por sección con resumen final
 `OK=n WARN=n FAIL=n`. Exit code = nº de FAILs. Los smokes corren en
-sandbox `/tmp/patrick-doctor` (no toca `~/.patrick-os`).
+sandbox `/tmp/patrick-doctor` (no toca `~/.patrick-os`). Si la
+instalación global está desactualizada, doctor imprime al final
+`Reparación sugerida: sudo bash scripts/install.sh`.
+
+Para reparar en el mismo flujo (pide sudo y luego re-corre el
+diagnóstico):
+
+```bash
+watson doctor repair   # también: make doctor-repair
+```
 
 ## Flujo rápido de desarrollo
 
