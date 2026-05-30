@@ -372,25 +372,38 @@ Cada `run` genera/actualiza:
   `show-plan` solo acepta **basename** dentro de `<workspace>/plans/`;
   paths con `/` o `..` se rechazan con exit 1.
 - `~/.patrick-os/workspaces/<modo>/plans/index.tsv` — índice
-  append-only para listar planes sin abrir cada `.md`:
+  append-only para listar planes sin abrir cada `.md`. Cada run
+  permitido también acepta `--tag <tag>` y `--priority low|normal|high`
+  como metadata opcional (defaults `general` / `normal`). Tag debe
+  matchear `[A-Za-z0-9_-]+`; cualquier otro carácter → exit 1.
+  Priority fuera del enum → exit 1.
+
+  Formato:
 
   ```
-  timestamp<TAB>mode<TAB>filename<TAB>task
+  timestamp<TAB>mode<TAB>filename<TAB>tag<TAB>priority<TAB>task
   ```
 
-  Una línea por `claw run` permitido. `watson ws plan-index <modo>`
-  lo imprime (`Sin índice de planes.` si todavía no hubo runs).
-- Búsqueda y listado rápido sobre el índice:
+  Los lectores toleran índices viejos de 4 columnas (pre-tags):
+  `tag` y `priority` se reportan como `general` / `normal`.
+- Búsqueda, listado y filtrado sobre el índice:
 
   ```bash
-  watson ws recent desarrollo               # últimos 5 (default)
-  watson ws recent desarrollo 10            # últimos N
-  watson ws search desarrollo "clase"       # case-insensitive, fixed-string
+  watson ws plan-index desarrollo                 # log completo, formateado
+  watson ws recent desarrollo                     # últimos 5 (default)
+  watson ws recent desarrollo 10                  # últimos N
+  watson ws search desarrollo "clase"             # case-insensitive
+  watson ws filter-tag desarrollo clase           # match exacto en tag
+  watson ws filter-priority desarrollo high       # match exacto en priority
   ```
 
-  Formato de salida: `timestamp | filename | task` (sin la columna
-  modo, que ya viene en la query). `recent` y `search` solo leen
-  `index.tsv`; sin red, sin herramientas externas.
+  Formato de salida común: `timestamp | filename | tag | priority | task`
+  (sin la columna modo, redundante con la query). Todo lee
+  `index.tsv` local; sin red, sin herramientas externas. Ejemplo:
+
+  ```bash
+  watson claw run --mode desarrollo --tag clase --priority high "preparar clase geriatría"
+  ```
 - `~/.patrick-os/openclaw/openclaw.log` — log append-only,
   `timestamp | mode=... | dry-run | task=...`.
 - `~/.patrick-os/openclaw/audit.log` — bitácora estructurada (ver
