@@ -23,6 +23,7 @@ CONFIGS_DEST="$SHARE_DIR/configs"
 # si no encuentra la policy, así que mejor verificarlo aquí.
 CRITICAL_CONFIGS=(
     openclaw-policy.yaml
+    openclaw-tools.yaml
 )
 
 # Scripts cuya ausencia tras instalar es bug crítico: backend de comandos

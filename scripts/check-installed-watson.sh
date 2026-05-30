@@ -45,6 +45,7 @@ CRITICAL_DOCS=(
 # Configs cuya presencia post-install es contrato (los lee el runtime).
 CRITICAL_CONFIGS=(
     openclaw-policy.yaml
+    openclaw-tools.yaml
 )
 
 script_dir="$(cd "$(dirname "$0")" && pwd)"
