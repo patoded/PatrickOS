@@ -14,8 +14,31 @@
 set -uo pipefail
 
 script_dir="$(cd "$(dirname "$0")" && pwd)"
-repo_dir="$(dirname "$script_dir")"
 SANDBOX="${PATRICK_DOCTOR_HOME:-/tmp/patrick-doctor}"
+
+# Detección del repo fuente. doctor.sh puede correr desde:
+#   - el repo en sí (script_dir/.. tiene .git, watson/watson.py, Makefile),
+#   - una instalación global (script_dir = /usr/local/share/patrick-os/scripts,
+#     que NO es el repo: no hay .git, no hay Makefile).
+# En el segundo caso, git status / make check / check-installed solo
+# tienen sentido contra el repo fuente. Buscamos en este orden:
+#   1) $PATRICK_OS_REPO (override explícito; basta con que tenga watson/watson.py).
+#   2) $PWD si parece repo (watson/watson.py + .git).
+#   3) ~/patrick-os si parece repo.
+# Si nada matchea, REPO queda vacío y las secciones que lo necesitan
+# se marcan WARN — el resto del doctor sigue corriendo.
+is_repo() {
+    [ -n "${1:-}" ] && [ -f "$1/watson/watson.py" ] && [ -d "$1/.git" ]
+}
+
+REPO=""
+if [ -n "${PATRICK_OS_REPO:-}" ] && [ -f "$PATRICK_OS_REPO/watson/watson.py" ]; then
+    REPO="$(cd "$PATRICK_OS_REPO" && pwd)"
+elif is_repo "$PWD"; then
+    REPO="$PWD"
+elif is_repo "$HOME/patrick-os"; then
+    REPO="$HOME/patrick-os"
+fi
 
 ok_count=0
 warn_count=0
@@ -31,47 +54,62 @@ show_tail() {
 }
 
 echo "PatrickOS Doctor"
-echo "Repo:    $repo_dir"
+echo "Repo:    ${REPO:-(no detectado)}"
 echo "Sandbox: $SANDBOX"
 echo
 
-# 1) git status (WARN si hay cambios sin commitear).
+# 1) git status (WARN si hay cambios; WARN si no hay repo detectado).
 echo "--- git status ---"
-git_out="$(cd "$repo_dir" && git status --short 2>&1)"
-if [ -z "$git_out" ]; then
-    ok "repo limpio"
+if [ -z "$REPO" ]; then
+    warn "git status omitido (repo no detectado; seteá PATRICK_OS_REPO o corré desde el repo)"
 else
-    warn "repo con cambios sin commitear"
-    echo "$git_out" | sed 's/^/    /'
-fi
-echo
-
-# 2) make check (FAIL bloquea).
-echo "--- make check ---"
-mk_out="$(cd "$repo_dir" && make check 2>&1)"
-mk_rc=$?
-if [ "$mk_rc" -eq 0 ]; then
-    ok "make check (fails=0)"
-else
-    fail "make check (exit=$mk_rc)"
-    show_tail "$mk_out"
-fi
-echo
-
-# 3) check-installed-watson.sh (FAIL si la instalación global está
-# desactualizada respecto al repo; WARN si el script no existe).
-echo "--- check-installed ---"
-ci="$script_dir/check-installed-watson.sh"
-if [ ! -x "$ci" ]; then
-    warn "check-installed-watson.sh no presente o sin +x"
-else
-    ci_out="$("$ci" 2>&1)"
-    ci_rc=$?
-    if [ "$ci_rc" -eq 0 ]; then
-        ok "check-installed (instalación global en sync)"
+    git_out="$(cd "$REPO" && git status --short 2>&1)"
+    if [ -z "$git_out" ]; then
+        ok "repo limpio"
     else
-        fail "check-installed (drift respecto al repo)"
-        show_tail "$ci_out"
+        warn "repo con cambios sin commitear"
+        echo "$git_out" | sed 's/^/    /'
+    fi
+fi
+echo
+
+# 2) make check (FAIL si exit ≠ 0; WARN si no hay repo).
+echo "--- make check ---"
+if [ -z "$REPO" ]; then
+    warn "make check omitido (repo no detectado)"
+else
+    mk_out="$(cd "$REPO" && make check 2>&1)"
+    mk_rc=$?
+    if [ "$mk_rc" -eq 0 ]; then
+        ok "make check (fails=0)"
+    else
+        fail "make check (exit=$mk_rc)"
+        show_tail "$mk_out"
+    fi
+fi
+echo
+
+# 3) check-installed-watson.sh (FAIL si drift; WARN si no hay repo o
+# el script no existe). Usamos la copia del REPO, no la de script_dir:
+# si doctor corre instalado, el script_dir/check-installed-watson.sh
+# computaría repo_dir = /usr/local/share/patrick-os y compararía consigo
+# mismo (sin sentido). El script del repo siempre conoce su propio repo.
+echo "--- check-installed ---"
+if [ -z "$REPO" ]; then
+    warn "check-installed omitido (repo no detectado)"
+else
+    ci="$REPO/scripts/check-installed-watson.sh"
+    if [ ! -x "$ci" ]; then
+        warn "check-installed-watson.sh no presente o sin +x en $REPO"
+    else
+        ci_out="$("$ci" 2>&1)"
+        ci_rc=$?
+        if [ "$ci_rc" -eq 0 ]; then
+            ok "check-installed (instalación global en sync)"
+        else
+            fail "check-installed (drift respecto al repo)"
+            show_tail "$ci_out"
+        fi
     fi
 fi
 echo
