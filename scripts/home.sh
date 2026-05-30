@@ -6,13 +6,13 @@
 #   scripts/home.sh
 #
 # Secciones:
-#   Estado Watson  — versión de Watson CLI.
-#   Sistema        — hostname / uptime / memoria.
-#   Daily          — delega en daily.sh si está presente y ejecutable.
-#   Atajos         — recordatorio de comandos comunes.
+#   Estado Watson    — versión de Watson CLI.
+#   Sistema          — hostname / uptime / memoria.
+#   Notas recientes  — últimas líneas de ~/.patrick-os/notes/notes.md.
+#   Tareas pendientes — pendientes ("- [ ]") de ~/.patrick-os/todos/todos.md.
+#   Atajos           — recordatorio de comandos comunes.
 #
-# Overrides reconocidos (los respeta daily.sh, los enumeramos acá para que
-# correr este script con sandbox funcione idéntico al resto):
+# Overrides reconocidos (compartidos con notes.sh / todos.sh / daily.sh):
 #   PATRICK_OS_NOTES_DIR
 #   PATRICK_OS_TODOS_DIR
 
@@ -21,6 +21,9 @@
 
 script_dir="$(cd "$(dirname "$0")" && pwd)"
 repo_dir="$(dirname "$script_dir")"
+
+NOTES_FILE="${PATRICK_OS_NOTES_DIR:-$HOME/.patrick-os/notes}/notes.md"
+TODOS_FILE="${PATRICK_OS_TODOS_DIR:-$HOME/.patrick-os/todos}/todos.md"
 
 echo "PatrickOS Home"
 
@@ -54,20 +57,37 @@ else
 fi
 
 echo
-echo "Daily:"
-daily_script="$script_dir/daily.sh"
-if [ -x "$daily_script" ]; then
-    # daily.sh ya respeta PATRICK_OS_NOTES_DIR / PATRICK_OS_TODOS_DIR, así
-    # que heredamos el env tal cual.
-    "$daily_script"
+echo "Notas recientes:"
+if [ -f "$NOTES_FILE" ]; then
+    # Append-only, así que tail = más recientes. 5 líneas para que el
+    # panel siga cabiendo en una pantalla cómoda.
+    tail -n 5 "$NOTES_FILE"
 else
-    echo "daily.sh no disponible (se shippea con PR #14)."
+    echo "Sin notas."
+fi
+
+echo
+echo "Tareas pendientes:"
+if [ -f "$TODOS_FILE" ]; then
+    # Pendientes = prefijo "- [ ]". A diferencia de daily.sh, no
+    # filtramos por fecha: lo arrastrado de días previos también cuenta.
+    pendientes="$(grep -E '^- \[ \] ' "$TODOS_FILE" || true)"
+    if [ -n "$pendientes" ]; then
+        echo "$pendientes" | tail -n 10
+    else
+        echo "Sin tareas pendientes."
+    fi
+else
+    echo "Sin tareas pendientes."
 fi
 
 echo
 echo "Atajos:"
-echo "  watson nota \"texto\"   guarda nota rápida"
-echo "  watson tarea \"texto\"  agrega tarea pendiente"
-echo "  watson diario         resumen del día"
-echo "  watson ia             chequeo de Ollama/GPU"
-echo "  watson claw           OpenClaw stub"
+echo "  watson dev       entorno de desarrollo"
+echo "  watson ia        chequeo de Ollama/GPU"
+echo "  watson consulta  modo consulta clínica"
+echo "  watson clase     modo docente"
+echo "  watson video     modo edición de video"
+echo "  watson diario    resumen del día"
+echo "  watson tareas    lista de tareas"
+echo "  watson notas     lista de notas"
