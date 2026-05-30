@@ -26,6 +26,7 @@ _ALIAS_MAP = {
     "ws": "workspace",
     "doc": "doctor",
     "pol": "policy",
+    "aud": "audit",
     "n": "nota",
     "ns": "notas",
     "note": "nota",
@@ -55,6 +56,7 @@ _PAYLOAD_PREFIXES = (
     "openclaw",
     "doctor",
     "policy",
+    "audit",
     "note",
     "nota",
     "todo",
@@ -63,6 +65,7 @@ _PAYLOAD_PREFIXES = (
     "ask",
     "doc",
     "pol",
+    "aud",
     "ws",
     "n",
     "t",
@@ -119,6 +122,7 @@ def mostrar_ayuda():
     print("  claw kill [\"razón\"]        activa kill switch local (bloquea claw run)")
     print("  claw unkill                desactiva el kill switch")
     print("  claw status                muestra estado del runtime + kill switch")
+    print("  audit (aud) [list|tail|path] lectura del audit log estructurado de OpenClaw")
     print("  modo consulta              flujo clínico")
     print("  modo clase                 flujo docente")
     print("  modo video                 flujo de edición")
@@ -139,6 +143,7 @@ def mostrar_ayuda():
     print("  watson policy check")
     print("  watson claw kill \"pausa de seguridad\"")
     print("  watson claw unkill")
+    print("  watson audit tail")
 
 
 def mostrar_version():
@@ -222,6 +227,17 @@ def ejecutar_comando(comando, pregunta=None):
         else:
             args = pregunta.split()
             ejecutar_seguro([script, *args], f"openclaw-stub.sh {args[0]}")
+
+    elif comando == "audit":
+        # Lectura del audit log estructurado de OpenClaw. Sin args =
+        # tail (las últimas 20 entradas); con args ('list', 'tail',
+        # 'path') se forwardea al script.
+        script = str(SCRIPTS_DIR / "openclaw-audit.sh")
+        if pregunta is None or not pregunta.strip():
+            ejecutar_seguro([script, "tail"], "openclaw-audit.sh tail")
+        else:
+            args = pregunta.split()
+            ejecutar_seguro([script, *args], f"openclaw-audit.sh {args[0]}")
 
     elif comando == "policy":
         # Capa de policy local de OpenClaw. Sin args = show (lectura

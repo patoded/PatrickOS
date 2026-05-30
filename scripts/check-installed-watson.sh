@@ -27,6 +27,7 @@ CRITICAL_SCRIPTS=(
     workspace.sh
     openclaw-stub.sh
     openclaw-policy.sh
+    openclaw-audit.sh
     validate-system.sh
     doctor.sh
 )
