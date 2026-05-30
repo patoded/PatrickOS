@@ -18,9 +18,15 @@ Aclaraciones explícitas y verificables:
   imprime `Estado: blocked-by-design` y sale en 1. Es el harness para
   cuando Beta-1 conecte un runtime real.
 
-Documento hermano: [`OPENCLAW_SAFETY_MODEL.md`](OPENCLAW_SAFETY_MODEL.md)
-describe el modelo de amenazas, los controles actuales y los que faltan
-antes de habilitar ejecución real.
+Documentos hermanos:
+
+- [`OPENCLAW_SAFETY_MODEL.md`](OPENCLAW_SAFETY_MODEL.md) — modelo de
+  amenazas, controles actuales y los que faltan antes de habilitar
+  ejecución real.
+- [`OPENCLAW_TOOL_CONTRACTS.md`](OPENCLAW_TOOL_CONTRACTS.md) — contrato
+  formal de cualquier herramienta futura + estado del registry.
+- [`OPENCLAW_BETA0_CHECKLIST.md`](OPENCLAW_BETA0_CHECKLIST.md) —
+  checklist formal de cierre de Beta-0.
 
 ## Roles
 
@@ -211,7 +217,16 @@ watson ws plan-status <modo> <basename>
 
 # Audit log
 watson audit [list|tail|path|summary]   (alias: aud)
+
+# Tool registry (read-only en Beta-0: siempre vacío/deshabilitado)
+watson tools [list|show|path]           (alias: tls)
 ```
+
+`watson tools` es el viewer del registry definido en
+[`OPENCLAW_TOOL_CONTRACTS.md`](OPENCLAW_TOOL_CONTRACTS.md). En Beta-0
+`tools list` siempre responde `"No hay herramientas habilitadas."` y
+`policy check` exige que `tools=[]` y `default_state=disabled` se
+mantengan.
 
 ### Eventos auditados
 

@@ -10,8 +10,21 @@ cualquiera de: la policy YAML, el catálogo de eventos de audit, la
 cadena de gates, o cuando se proponga la primera herramienta para
 Beta-1.
 
-Documento hermano: [`OPENCLAW_BETA0_SPEC.md`](OPENCLAW_BETA0_SPEC.md)
-describe el contrato técnico ya implementado.
+Documentos hermanos:
+
+- [`OPENCLAW_BETA0_SPEC.md`](OPENCLAW_BETA0_SPEC.md) — contrato técnico
+  ya implementado.
+- [`OPENCLAW_TOOL_CONTRACTS.md`](OPENCLAW_TOOL_CONTRACTS.md) — contrato
+  formal por herramienta.
+- [`OPENCLAW_BETA0_CHECKLIST.md`](OPENCLAW_BETA0_CHECKLIST.md) —
+  checklist formal de cierre de Beta-0.
+
+Beta-0 ya tiene su checklist de cierre. El tool registry sigue
+vacío/deshabilitado (`tools: []`, `default_state: disabled`), validado
+por `policy check` y por el doctor smoke. El siguiente paso técnico
+antes de Beta-1 es **sandbox real + allowlist concreta + contratos
+ejecutables**: implementar lo que el contrato describe, no agregar
+documentos.
 
 ## Amenazas principales
 

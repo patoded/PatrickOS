@@ -108,6 +108,25 @@ else
     fail "contexto faltante: $ctx"
 fi
 
+# 5b) Docs de OpenClaw Beta-0 obligatorios para targets v0.3.x. La
+#    presencia de estos archivos materializa el contrato: spec,
+#    modelo de seguridad, contratos de herramientas y checklist
+#    formal de cierre tienen que existir antes de tagear v0.3.
+case "$target_version" in
+    v0.3.*)
+        for f in OPENCLAW_BETA0_SPEC.md \
+                 OPENCLAW_SAFETY_MODEL.md \
+                 OPENCLAW_TOOL_CONTRACTS.md \
+                 OPENCLAW_BETA0_CHECKLIST.md; do
+            if [ -f "$repo_dir/docs/$f" ]; then
+                ok "doc OpenClaw: docs/$f"
+            else
+                fail "doc OpenClaw faltante: docs/$f"
+            fi
+        done
+        ;;
+esac
+
 # 6) make check pasa. Lo corremos en modo silencioso; si truena, marcamos
 #    FAIL para que el operador no publique con tests rotos. Si no hay
 #    make/Makefile, lo dejamos como TODO (entorno mínimo).
