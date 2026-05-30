@@ -1,12 +1,124 @@
 #!/usr/bin/env bash
-# openclaw-stub.sh — stub no-op de OpenClaw para preparar integración
-# agéntica futura. NO ejecuta herramientas, NO toca red, NO carga runtime.
-# Su única función hoy es responder consistentemente y servir de hook para
-# que Watson tenga el comando 'openclaw'/'claw' cableado antes de que el
-# runtime real exista.
+# openclaw-stub.sh — OpenClaw Beta-0 dry-run.
+# Acepta una tarea, crea workspace por modo, escribe un plan markdown y
+# un log mínimo. NO ejecuta herramientas reales, NO toca red, NO escala
+# privilegios, NO carga runtime. Ver docs/OPENCLAW_BETA0_SPEC.md.
+#
+# Uso:
+#   openclaw-stub.sh                       (alias de status)
+#   openclaw-stub.sh status
+#   openclaw-stub.sh run "tarea"
+#   openclaw-stub.sh run --mode <modo> "tarea"
+#
+# Modo default: desarrollo
+# Modos permitidos: consulta, clase, video, desarrollo, ia, general
+#
+# Almacenamiento (todo bajo $PATRICK_OS_HOME, default $HOME/.patrick-os):
+#   $PATRICK_OS_HOME/openclaw/openclaw.log         log append-only
+#   $PATRICK_OS_HOME/workspaces/<modo>/last-plan.md plan más reciente
 
-echo "OpenClaw Runtime: stub"
-echo "Estado: no instalado / no activo"
-echo "Modo seguro: sin ejecución de herramientas"
-echo "Próximo paso: integrar runtime aislado con whitelist"
-exit 0
+set -euo pipefail
+
+OS_HOME="${PATRICK_OS_HOME:-$HOME/.patrick-os}"
+LOG_DIR="$OS_HOME/openclaw"
+LOG_FILE="$LOG_DIR/openclaw.log"
+WORKSPACES_DIR="$OS_HOME/workspaces"
+ALLOWED_MODES=(consulta clase video desarrollo ia general)
+
+print_status() {
+    echo "OpenClaw Runtime: stub"
+    echo "Estado: no instalado / no activo"
+    echo "Modo seguro: sin ejecución de herramientas"
+    echo "Beta-0 dry-run disponible: openclaw-stub.sh run \"tarea\""
+    echo "Próximo paso: integrar runtime aislado con whitelist"
+}
+
+usage() {
+    cat <<'EOF'
+Uso:
+  openclaw-stub.sh status
+  openclaw-stub.sh run "tarea"
+  openclaw-stub.sh run --mode <modo> "tarea"
+
+Modos permitidos: consulta, clase, video, desarrollo (default), ia, general
+EOF
+}
+
+mode_allowed() {
+    local m="$1"
+    for am in "${ALLOWED_MODES[@]}"; do
+        [ "$am" = "$m" ] && return 0
+    done
+    return 1
+}
+
+cmd="${1:-status}"
+shift || true
+
+case "$cmd" in
+    status|"")
+        print_status
+        exit 0
+        ;;
+    run)
+        mode="desarrollo"
+        # --mode opcional debe ir antes del texto libre.
+        if [ "${1:-}" = "--mode" ]; then
+            shift || true
+            if [ -z "${1:-}" ]; then
+                echo "Error: --mode requiere un valor." >&2
+                usage >&2
+                exit 1
+            fi
+            mode="$1"
+            shift || true
+        fi
+        if ! mode_allowed "$mode"; then
+            echo "Error: modo '$mode' no permitido." >&2
+            echo "Modos permitidos: ${ALLOWED_MODES[*]}" >&2
+            exit 1
+        fi
+        # El resto de los argumentos es la tarea. Watson nos pasa los
+        # tokens ya separados, así que rejuntamos con espacios simples.
+        tarea="${*:-}"
+        tarea="${tarea#"${tarea%%[![:space:]]*}"}"
+        tarea="${tarea%"${tarea##*[![:space:]]}"}"
+        if [ -z "$tarea" ]; then
+            echo "Error: tarea vacía." >&2
+            usage >&2
+            exit 1
+        fi
+
+        ws_dir="$WORKSPACES_DIR/$mode"
+        plan_file="$ws_dir/last-plan.md"
+        mkdir -p "$ws_dir" "$LOG_DIR"
+
+        fecha="$(date '+%Y-%m-%d %H:%M:%S')"
+        # Sobrescribimos last-plan.md a propósito: es "el último plan".
+        # El historial completo va al log append-only.
+        cat > "$plan_file" <<EOF_PLAN
+# OpenClaw Dry Run Plan
+Fecha: $fecha
+Modo: $mode
+Tarea: $tarea
+Herramientas permitidas: ninguna
+Red: deshabilitada
+Sudo: deshabilitado
+Estado: dry-run, nada ejecutado
+EOF_PLAN
+
+        printf '%s | mode=%s | dry-run | task=%s\n' \
+            "$fecha" "$mode" "$tarea" >> "$LOG_FILE"
+
+        echo "OpenClaw Beta-0 dry-run"
+        echo "Modo: $mode"
+        echo "Plan: $plan_file"
+        echo "Estado: dry-run, nada ejecutado"
+        exit 0
+        ;;
+    *)
+        echo "Subcomando desconocido: $cmd" >&2
+        usage >&2
+        exit 1
+        ;;
+esac
