@@ -138,10 +138,16 @@ hoy.
   herramienta en `bwrap` (o equivalente disponible en la ISO) con
   mounts mínimos: solo lectura del binario + lectura/escritura del
   workspace.
-- **Allowlist de comandos.** El runtime real solo puede ejecutar
-  binarios cuya ruta absoluta está en una whitelist hardcodeada en
-  el repo. La primera herramienta entra en un PR aparte con su
-  propia revisión de seguridad.
+- **Tool contracts + allowlist.** El siguiente control técnico antes
+  de habilitar cualquier ejecución es el contrato de herramientas
+  definido en [`OPENCLAW_TOOL_CONTRACTS.md`](OPENCLAW_TOOL_CONTRACTS.md):
+  cada herramienta tiene que declarar `allowed_modes`, `allowed_args`,
+  `denied_args`, `filesystem_scope`, `network`, `sudo`,
+  `timeout_seconds`, `requires_confirmation` y `log_level` antes de
+  entrar a `configs/openclaw-tools.yaml`. El runtime real solo puede
+  ejecutar binarios cuya ruta absoluta está en esa allowlist. La
+  primera herramienta entra en un PR aparte con su propia revisión
+  de seguridad.
 - **Confirmación humana obligatoria por step.** Un plan aprobado da
   derecho a *intentar* la ejecución; cada step del plan, en el
   futuro, requiere su propio prompt interactivo. Sin TTY ⇒ no

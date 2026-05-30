@@ -96,6 +96,29 @@ case "$cmd" in
             echo "[INFO] KILL_SWITCH activo: $ks (OpenClaw run está bloqueado por el usuario)"
         fi
 
+        # Tool registry (configs/openclaw-tools.yaml): ver
+        # docs/OPENCLAW_TOOL_CONTRACTS.md. En Beta-0 la lista debe
+        # estar vacía y default_state=disabled. Si el archivo no
+        # existe todavía (instalación vieja), no fallamos — es un
+        # invariante futuro, no un control crítico para Beta-0
+        # dry-run. Si existe, exigimos las dos invariantes.
+        tools_yaml=""
+        if [ -n "${PATRICK_OS_TOOLS:-}" ] && [ -f "$PATRICK_OS_TOOLS" ]; then
+            tools_yaml="$PATRICK_OS_TOOLS"
+        elif [ -f "$(dirname "$script_dir")/configs/openclaw-tools.yaml" ]; then
+            tools_yaml="$(dirname "$script_dir")/configs/openclaw-tools.yaml"
+        elif [ -f "/usr/local/share/patrick-os/configs/openclaw-tools.yaml" ]; then
+            tools_yaml="/usr/local/share/patrick-os/configs/openclaw-tools.yaml"
+        fi
+        if [ -n "$tools_yaml" ]; then
+            if grep -qE '^default_state:[[:space:]]+disabled[[:space:]]*$' "$tools_yaml" \
+               && grep -qE '^tools:[[:space:]]*\[\][[:space:]]*$' "$tools_yaml"; then
+                ok "tool registry: disabled/empty ($tools_yaml)"
+            else
+                fail_msg "tool registry ($tools_yaml) tiene contenido inesperado para Beta-0 (default_state debe ser disabled y tools debe ser [])"
+            fi
+        fi
+
         echo
         if [ "$fail" -gt 0 ]; then
             echo "Resultado: FAIL ($fail invariante/s rota/s). NO ejecutar OpenClaw run hasta corregir." >&2
