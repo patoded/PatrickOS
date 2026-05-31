@@ -22,13 +22,16 @@ Documentos hermanos:
 Beta-0 ya tiene su checklist de cierre. Desde v0.4, el tool
 registry ya **tiene la allowlist concreta** (`configs/openclaw-tools.yaml`
 con 7 candidatas, todas `enabled: false`); cada entrada pasa la
-shape validation de `scripts/openclaw-contracts.sh` y el negative
+shape validation de `scripts/openclaw-contracts.sh`, el negative
 test 13 prueba que cualquier intento de pasar una a `enabled: true`
-es rechazado. `policy check` mantiene `tool registry: ningún tool
-enabled` mientras eso siga. El siguiente paso técnico antes de
-Beta-1 es **sandbox real + filesystem boundaries + confirmation
-gate ejecutable**: implementar el wrapper que el contrato describe,
-no agregar más entradas al registry.
+es rechazado, y los tests 14/15/16 prueban el camino de
+**simulación audit-only** (`scripts/openclaw-simulate-tool.sh`)
+que ejercita la invocación de una tool sin ejecutarla. `policy
+check` mantiene `tool registry: ningún tool enabled` mientras eso
+siga. El siguiente paso técnico antes de Beta-1 es **sandbox real
++ filesystem boundaries + confirmation gate ejecutable**:
+implementar el wrapper que el contrato describe, no agregar más
+entradas al registry.
 
 ## Amenazas principales
 

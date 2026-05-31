@@ -330,6 +330,20 @@ que actualice también
 [`OPENCLAW_SAFETY_MODEL.md`](docs/OPENCLAW_SAFETY_MODEL.md) y
 [`OPENCLAW_BETA1_PLAN.md`](docs/OPENCLAW_BETA1_PLAN.md).
 
+Para ejercitar el camino de invocación de una candidata sin
+ejecutar nada, hay simulación audit-only:
+
+```bash
+watson tool simulate read_file       # sugar 'tool' → 'tools'
+watson tools simulate git_status
+watson simtool create_task           # sugar 'simtool X' → 'tools simulate X'
+```
+
+La simulación valida que la tool exista en el registry y esté
+`enabled: false`, audita el intento (eventos `tool_simulated`,
+`tool_unknown`, `tool_enabled_forbidden`), e imprime el plan
+`Status: simulated-only`. **No ejecuta binarios.**
+
 ## OpenClaw audit log
 
 Bitácora estructurada y append-only de eventos de OpenClaw (status,

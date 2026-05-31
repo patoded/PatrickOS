@@ -14,14 +14,21 @@ primera herramienta real: no se evalúa ninguna fase de runtime sin
 que el contracts validator pase y la suite negativa termine en
 FAIL=0.
 
-A partir de este PR, **las 7 candidatas de Beta-1 ya están
-declaradas en `configs/openclaw-tools.yaml`** con `enabled: false`.
-Esto cumple la **fase 2** (allowlist concreta) sin habilitar nada:
-el shape del contrato vive en código, el validador lo prueba en
-cada `make safety-check`, y cualquier intento de pasar una
-candidata a `enabled: true` rompe el policy gate antes de cualquier
-`claw run`. Habilitar la primera entrada sigue requiriendo PR
-explícito que ataque las fases 3-8.
+A partir de v0.4, **las 7 candidatas de Beta-1 ya están declaradas
+en `configs/openclaw-tools.yaml`** con `enabled: false`. Esto
+cumple la **fase 2** (allowlist concreta) sin habilitar nada: el
+shape del contrato vive en código, el validador lo prueba en cada
+`make safety-check`, y cualquier intento de pasar una candidata a
+`enabled: true` rompe el policy gate antes de cualquier `claw run`.
+
+A esto se suma **simulated execution** (fase 7), también sin
+habilitar nada: `scripts/openclaw-simulate-tool.sh` y los comandos
+`watson tool simulate <name>` / `watson simtool <name>` ejercitan
+el camino de invocación de una tool — validan el registry, exigen
+`enabled: false`, auditan el intento — pero NO ejecutan ningún
+binario. Eventos auditados nuevos: `tool_simulated`,
+`tool_unknown`, `tool_enabled_forbidden`. Habilitar la primera
+entrada sigue requiriendo PR explícito que ataque las fases 3-6 y 8.
 
 Documentos hermanos:
 

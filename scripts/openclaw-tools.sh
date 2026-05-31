@@ -5,9 +5,10 @@
 # docs/OPENCLAW_TOOL_CONTRACTS.md para el contrato completo.
 #
 # Uso:
-#   openclaw-tools.sh path     imprime ruta del openclaw-tools.yaml
-#   openclaw-tools.sh show     imprime el contenido del YAML
-#   openclaw-tools.sh list     lista herramientas habilitadas (en Beta-0: ninguna)
+#   openclaw-tools.sh path                    imprime ruta del openclaw-tools.yaml
+#   openclaw-tools.sh show                    imprime el contenido del YAML
+#   openclaw-tools.sh list                    lista herramientas habilitadas (Beta-0: ninguna)
+#   openclaw-tools.sh simulate <name> [args]  delega en openclaw-simulate-tool.sh
 #
 # Búsqueda del archivo (primer hit gana):
 #   1. $PATRICK_OS_TOOLS (override explícito)
@@ -28,6 +29,18 @@ elif [ -f "/usr/local/share/patrick-os/configs/openclaw-tools.yaml" ]; then
 fi
 
 cmd="${1:-list}"
+# 'simulate' delega directo a openclaw-simulate-tool.sh; usamos
+# shift antes del case para forwardear el resto de los args (tool
+# name + args) tal cual.
+if [ "$cmd" = "simulate" ]; then
+    shift || true
+    sim_script="$(dirname "$0")/openclaw-simulate-tool.sh"
+    if [ ! -x "$sim_script" ]; then
+        echo "Error: openclaw-simulate-tool.sh no presente en $(dirname "$0")." >&2
+        exit 1
+    fi
+    exec "$sim_script" "$@"
+fi
 
 case "$cmd" in
     path)

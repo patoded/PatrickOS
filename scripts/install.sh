@@ -40,6 +40,7 @@ CRITICAL_SCRIPTS=(
     openclaw-tools.sh
     openclaw-contracts.sh
     openclaw-negative-tests.sh
+    openclaw-simulate-tool.sh
     validate-system.sh
     doctor.sh
 )
