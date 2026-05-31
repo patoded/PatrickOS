@@ -33,6 +33,22 @@ estado terminal es "listo para simulación, no para ejecución
 real". El doctor smoke nuevo `--- readiness smoke ---` lo
 ejecuta y verifica ese estado terminal en cada `make doctor`.
 
+El **reporte de auditoría** (`scripts/openclaw-report.sh`,
+`watson report` / `watson claw report`, `make report`) consolida
+en un único documento markdown la salida de todos los scripts
+auditados: policy/contracts/tools como estado general, últimos
+planes y últimas ejecuciones simuladas vía `workspace.sh recent /
+recent-executions`, audit summary, readiness con sus
+`ready_for_*` flags, negative tests con su resumen, y conclusión
+con `ready_for_real_execution=no`. Acepta `--mode <m>` y `--out
+<archivo.md>`; sin `--out` imprime a stdout. **No ejecuta
+herramientas reales** — solo concatena lo ya auditado, sin abrir
+sockets ni invocar binarios externos. El doctor smoke
+`--- report smoke ---` lo ejecuta a un sandbox tmp y verifica
+header markdown + el invariante `ready_for_real_execution=no` en
+cada `make doctor`. Negative tests 27 y 28 lo cubren al final
+de la suite.
+
 A partir del PR de manifests, cada `simulate-execute` aprobado
 escribe un **manifest inmutable** en
 `<workspace>/executions/<ts>-<tool>-manifest.md` con metadata,

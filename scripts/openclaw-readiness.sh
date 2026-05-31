@@ -26,6 +26,18 @@ set -uo pipefail
 
 script_dir="$(cd "$(dirname "$0")" && pwd)"
 
+# Detectar si entramos desde una cadena (report/doctor/negative-
+# tests nos llama). En ese caso saltamos sub-checks que llamarían
+# de vuelta hacia esos scripts y entrarían en loop.
+CHAIN_SKIP_NT=0
+CHAIN_SKIP_DOCTOR=0
+if [ -n "${PATRICK_DOCTOR_SKIP_NEGATIVE_TESTS:-}" ]; then
+    CHAIN_SKIP_NT=1
+fi
+if [ -n "${PATRICK_DOCTOR_SKIP_READINESS:-}" ]; then
+    CHAIN_SKIP_DOCTOR=1
+fi
+
 VERBOSE=0
 for arg in "$@"; do
     case "$arg" in
@@ -81,18 +93,34 @@ else
     vlog "$tools_out"
 fi
 
-# 4) negative tests OK (suite completa).
-check_silent "negative tests" "$script_dir/openclaw-negative-tests.sh"
+# 4) negative tests OK (suite completa). Si readiness fue llamado
+# desde negative-tests vía report (cadena nt → report → readiness),
+# saltamos para no entrar en loop. El caller ya está corriendo la
+# suite — no necesitamos correrla otra vez.
+if [ "$CHAIN_SKIP_NT" = "1" ]; then
+    ok "negative tests (omitido para evitar recursión)"
+else
+    # Inline export: el flag llega al hijo (negative-tests) pero no
+    # se queda en nuestro env. Le seteamos los 3 SKIP_* al hijo
+    # para que cualquier doctor que dispare a su vez salte sus
+    # smokes recursivos.
+    PATRICK_DOCTOR_SKIP_NEGATIVE_TESTS=1 \
+    PATRICK_DOCTOR_SKIP_READINESS=1 \
+    PATRICK_DOCTOR_SKIP_REPORT=1 \
+        check_silent "negative tests" "$script_dir/openclaw-negative-tests.sh"
+fi
 
-# 5) doctor OK (con guard de recursión: cuando readiness llama
-# doctor, doctor salta su propia 'readiness smoke').
-if [ -n "${PATRICK_DOCTOR_SKIP_READINESS:-}" ]; then
-    # Ya estamos siendo llamados desde doctor → no llamamos doctor
-    # otra vez. Reportamos OK por convención (asumiendo que el
-    # caller ya verifica el resto del doctor).
+# 5) doctor OK. Si readiness fue llamado desde una cadena que
+# pasa por doctor (CHAIN_SKIP_DOCTOR), saltamos para no entrar en
+# loop. Si no, llamamos doctor con los 3 SKIP_* inline para que
+# salte sus smokes recursivos (readiness/negative-tests/report).
+if [ "$CHAIN_SKIP_DOCTOR" = "1" ]; then
     ok "doctor (omitido para evitar recursión)"
 else
-    PATRICK_DOCTOR_SKIP_READINESS=1 check_silent "doctor" "$script_dir/doctor.sh"
+    PATRICK_DOCTOR_SKIP_NEGATIVE_TESTS=1 \
+    PATRICK_DOCTOR_SKIP_READINESS=1 \
+    PATRICK_DOCTOR_SKIP_REPORT=1 \
+        check_silent "doctor" "$script_dir/doctor.sh"
 fi
 
 # 6, 7, 8) Verificación de gates end-to-end en sandbox tmp.

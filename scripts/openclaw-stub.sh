@@ -73,6 +73,7 @@ Uso:
   openclaw-stub.sh policy [show|path|check]
   openclaw-stub.sh negative-tests [--verbose]
   openclaw-stub.sh readiness [beta1] [--verbose]
+  openclaw-stub.sh report [--mode <modo>] [--out <file>]
 
 Modos permitidos: consulta, clase, video, desarrollo (default), ia, general
 Priority permitidas: low, normal (default), high
@@ -162,6 +163,16 @@ case "$cmd" in
             exit 1
         fi
         exec "$rd_script" "$@"
+        ;;
+    report)
+        # Delegar en openclaw-report.sh (mismo dir). Args extra
+        # (--mode <m>, --out <file>) se forwardean.
+        rp_script="$(dirname "$0")/openclaw-report.sh"
+        if [ ! -x "$rp_script" ]; then
+            echo "Error: openclaw-report.sh no presente en $(dirname "$0")." >&2
+            exit 1
+        fi
+        exec "$rp_script" "$@"
         ;;
     run)
         mode="desarrollo"

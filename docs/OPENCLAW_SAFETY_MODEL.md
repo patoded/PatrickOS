@@ -119,6 +119,17 @@ futura y va en la sección siguiente.
   / plan_filename / status` por cada simulación, para listado y
   búsqueda forense sin abrir cada `.md`
   (`ws execution-index / recent-executions / search-executions`).
+- **Reporte de auditoría consolidado**
+  (`scripts/openclaw-report.sh`, `watson report`, `make report`).
+  Genera un markdown único que concatena policy/contracts/tools/
+  últimos planes/últimas ejecuciones simuladas/audit summary/
+  readiness/negative tests + conclusión con
+  `ready_for_real_execution=no`. Soporta `--out <archivo.md>` para
+  archivado de la corrida. **No invoca runtime real:** solo
+  delega a scripts ya auditados del repo y formatea su salida.
+  El doctor smoke `--- report smoke ---` verifica que el reporte
+  se genera con header markdown válido y el invariante de no
+  ejecución real.
 - **Approval state.** Cada plan puede marcarse `approved` o
   `rejected` por separado. El sidecar es local y per-plan; no hay
   "aprobación global".

@@ -25,6 +25,17 @@ esac
 
 script_dir="$(cd "$(dirname "$0")" && pwd)"
 
+# No exportamos guards a nivel global porque tests internos del
+# runner (16, 18) llaman a openclaw-stub.sh y sus chains; tener
+# SKIP_* exportado globalmente hace que readiness/doctor/report
+# se contaminen para sí mismos. Cuando los tests 27/28 lleguen a
+# llamar 'report', el report verá las flags vía su propio detect
+# (REPORT_FROM_CHAIN) o las herede inline.
+
+# Para que report (test 27/28) NO entre en loop, sí necesitamos
+# avisarle. Lo hacemos pasando los flags inline en el call de los
+# tests 27/28 más abajo.
+
 # Sandbox dedicado.
 if [ -n "${PATRICK_OS_HOME:-}" ]; then
     SANDBOX="$PATRICK_OS_HOME"
@@ -409,6 +420,31 @@ if [ "$srch_rc" -eq 0 ] && echo "$srch_out" | grep -q "read_file"; then
 else
     fail_msg "26. ws search-executions read_file (rc=$srch_rc o sin matches)"
     echo "$srch_out" | tail -n 4 | sed 's/^/        /'
+fi
+
+# ---------------------------------------------------------------
+# 27-28) openclaw-report.sh consolida evidencia local
+# ---------------------------------------------------------------
+RP="$script_dir/openclaw-report.sh"
+RP_OUT_FILE="$SANDBOX/openclaw-report.md"
+
+# 27: report --out crea archivo. SKIP_NEGATIVE_TESTS inline para
+# que report no llame al runner recursivamente.
+PATRICK_DOCTOR_SKIP_NEGATIVE_TESTS=1 \
+PATRICK_DOCTOR_SKIP_READINESS=1 \
+PATRICK_DOCTOR_SKIP_REPORT=1 \
+    "$RP" --mode desarrollo --out "$RP_OUT_FILE" > /dev/null 2>&1
+if [ -f "$RP_OUT_FILE" ] && grep -q "^# OpenClaw Report$" "$RP_OUT_FILE"; then
+    ok "27. report --out genera archivo con header markdown"
+else
+    fail_msg "27. report --out NO generó archivo válido en $RP_OUT_FILE"
+fi
+
+# 28: report contiene ready_for_real_execution=no
+if [ -f "$RP_OUT_FILE" ] && grep -q "^\* ready_for_real_execution=no$" "$RP_OUT_FILE"; then
+    ok "28. report contiene 'ready_for_real_execution=no'"
+else
+    fail_msg "28. report NO contiene 'ready_for_real_execution=no'"
 fi
 
 echo

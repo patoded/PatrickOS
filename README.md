@@ -280,6 +280,29 @@ disabled`, `negative tests`, `doctor`, `execution gate
 blocked-by-design`, `simulated binding`. Exit 0 si los OK pasan;
 exit 1 si cualquiera falla. `make readiness` también disponible.
 
+## OpenClaw execution audit report
+
+`watson report` (alias `rpt`, también `watson claw report`)
+genera un reporte markdown consolidado que concatena la salida de
+todos los scripts auditados — policy/contracts/tools como estado
+general, últimos planes y últimas ejecuciones simuladas, audit
+summary, readiness, negative tests, y conclusión con
+`ready_for_real_execution=no`.
+
+```bash
+watson report                                  # stdout, modo desarrollo
+watson report --mode clase                     # otro modo
+watson report --out ~/openclaw-report.md       # escribe a archivo
+make report                                    # equivalente
+```
+
+Sin `--out` imprime a stdout; con `--out <file>` escribe el
+archivo (creando dirs padres) e imprime la ruta. **No ejecuta
+herramientas reales**: solo concatena lo ya auditado, sin abrir
+sockets ni invocar binarios externos. `watson doctor` corre un
+smoke `--- report smoke ---` que verifica que el reporte se
+genera con header markdown y el invariante de no ejecución real.
+
 ## OpenClaw v0.4 Safety Foundation
 
 A partir de `v0.4.0-dev` hay dos herramientas adicionales para
@@ -289,9 +312,10 @@ con ejecución real:
 - **`scripts/openclaw-contracts.sh`** — validador del registry de
   herramientas: invariantes baseline, shape mínima por entrada (11
   campos) y reglas duras (sin `sudo`, sin red, names seguros).
-- **`scripts/openclaw-negative-tests.sh`** — suite de 12 pruebas
+- **`scripts/openclaw-negative-tests.sh`** — suite de 28 pruebas
   negativas que verifica que cada gate (policy, kill switch,
-  approval, basename, tag/priority, modo) bloquea su escenario.
+  approval, basename, tag/priority, modo, simulate-execute,
+  manifests, index, report) bloquea o pasa según corresponde.
 
 Comandos:
 

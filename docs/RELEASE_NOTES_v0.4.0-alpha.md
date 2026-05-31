@@ -26,6 +26,13 @@ no de runtime real.
   simulated binding y reporta `ready_for_simulated_beta1=yes` /
   `ready_for_real_execution=no` (este último es `[BLOCKED]` por
   diseño en Beta-0/v0.4).
+- **Execution audit report** (`scripts/openclaw-report.sh`,
+  `watson report`, `make report`) — reporte markdown consolidado
+  que concatena policy/contracts/tools/últimos planes/últimas
+  ejecuciones simuladas/audit summary/readiness/negative tests
+  en un solo documento legible. Soporta `--mode` y `--out
+  <archivo.md>`. No ejecuta herramientas reales; solo recompila
+  salida de scripts ya auditados.
 
 ## No incluido todavía
 

@@ -153,11 +153,15 @@ show-execution latest imprime "No command executed.", basename
 traversal en show-execution rechazado)** y **24-26 (execution
 manifest index: simulate-execute appendea a index.tsv,
 recent-executions imprime con read_file, search-executions
-read_file matchea)**. Tests 13 y 15 cubren el item 10 (modificar
+read_file matchea)** y **27-28 (execution audit report:
+`openclaw-report.sh --out` genera archivo con header markdown
+válido y contiene el invariante `ready_for_real_execution=no`
+en la conclusión)**. Tests 13 y 15 cubren el item 10 (modificar
 policy/registry desde un actor); test 20 y 23 refuerzan el item
-5 (path traversal) sobre el binding y el viewer de manifests. Los items restantes (sandbox, sudo, red, shell libre,
-plugin externo) siguen documentados — quedan para Beta-1 cuando
-el sandbox de proceso esté en código.
+5 (path traversal) sobre el binding y el viewer de manifests.
+Los items restantes (sandbox, sudo, red, shell libre, plugin
+externo) siguen documentados — quedan para Beta-1 cuando el
+sandbox de proceso esté en código.
 
 ```bash
 scripts/openclaw-negative-tests.sh        # runner directo
