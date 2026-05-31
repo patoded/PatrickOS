@@ -288,6 +288,54 @@ else
     echo "$sim_out" | tail -n 6 | sed 's/^/        /'
 fi
 
+# ---------------------------------------------------------------
+# 17-19) simulate-execute binding (plan aprobado + tool del registry)
+# ---------------------------------------------------------------
+# Generamos un plan dedicado para el binding. Por las dudas
+# limpiamos cualquier sidecar .state previo (el plan recién creado
+# no debería tener, pero defensivo).
+"$OC" run --mode desarrollo --tag negtest-se --priority normal "plan para simulate-execute tests" > /dev/null 2>&1
+SE_BASENAME=""
+for p in "$SANDBOX/workspaces/desarrollo/plans/"*-plan.md; do
+    [ -f "$p" ] && SE_BASENAME="$(basename "$p")"
+done
+if [ -n "$SE_BASENAME" ]; then
+    rm -f "$SANDBOX/workspaces/desarrollo/plans/$SE_BASENAME.state"
+fi
+
+# 17) simulate-execute sin aprobación → blocked
+if [ -z "$SE_BASENAME" ]; then
+    fail_msg "17. (precondición rota) no se generó plan para simulate-execute"
+else
+    run_fail "17. simulate-execute sin aprobación → blocked" \
+        "$OC" simulate-execute --mode desarrollo --tool read_file "$SE_BASENAME"
+fi
+
+# 18) approve + simulate-execute con tool conocida → simulated-only (exit 0)
+if [ -n "$SE_BASENAME" ]; then
+    "$WS" approve-plan desarrollo "$SE_BASENAME" > /dev/null 2>&1
+    se_out="$("$OC" simulate-execute --mode desarrollo --tool read_file "$SE_BASENAME" 2>&1)"
+    se_rc=$?
+    if [ "$se_rc" -eq 0 ] && echo "$se_out" | grep -q "Status: simulated-only"; then
+        ok "18. simulate-execute approved + read_file → exit 0 con Status: simulated-only"
+    else
+        fail_msg "18. simulate-execute approved (rc=$se_rc o sin 'simulated-only')"
+        echo "$se_out" | tail -n 6 | sed 's/^/        /'
+    fi
+fi
+
+# 19) simulate-execute aprobado con tool desconocida → fail
+if [ -n "$SE_BASENAME" ]; then
+    run_fail "19. simulate-execute --tool unknown_xyz → rechazado" \
+        "$OC" simulate-execute --mode desarrollo --tool unknown_xyz "$SE_BASENAME"
+fi
+
+# ---------------------------------------------------------------
+# 20) simulate-execute con filename traversal → rechazado por basename
+# ---------------------------------------------------------------
+run_fail "20. simulate-execute --mode desarrollo '../secreto' → rechazado" \
+    "$OC" simulate-execute --mode desarrollo --tool read_file "../secreto"
+
 echo
 echo "Resumen: OK=$ok_count FAIL=$fail_count"
 exit "$fail_count"

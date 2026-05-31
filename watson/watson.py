@@ -116,6 +116,8 @@ def mostrar_ayuda():
     print("  claw run --mode <m> \"...\"  dry-run en workspace por modo")
     print("  claw run --tag <t> --priority <p> \"...\"  metadata opcional del plan")
     print("  claw execute --mode <m> <file>  Beta-0 execution gate (siempre blocked-by-design)")
+    print("  claw simulate-execute --mode <m> --tool <t> <file>  binding plan+tool (simulated-only)")
+    print("  claw simexec --mode <m> --tool <t> <file>           idem (alias)")
     print("  workspace list (ws)        lista workspaces locales por modo")
     print("  workspace init <modo>      crea workspace + README local")
     print("  workspace clean <m> --yes  vacía workspace (requiere --yes)")
@@ -191,6 +193,7 @@ def mostrar_ayuda():
     print("  watson negative-tests")
     print("  watson tool simulate read_file")
     print("  watson simtool git_status")
+    print("  watson claw simulate-execute --mode desarrollo --tool read_file 20260530-…-plan.md")
 
 
 def mostrar_version():

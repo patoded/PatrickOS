@@ -24,14 +24,18 @@ registry ya **tiene la allowlist concreta** (`configs/openclaw-tools.yaml`
 con 7 candidatas, todas `enabled: false`); cada entrada pasa la
 shape validation de `scripts/openclaw-contracts.sh`, el negative
 test 13 prueba que cualquier intento de pasar una a `enabled: true`
-es rechazado, y los tests 14/15/16 prueban el camino de
+es rechazado, los tests 14/15/16 prueban el camino de
 **simulación audit-only** (`scripts/openclaw-simulate-tool.sh`)
-que ejercita la invocación de una tool sin ejecutarla. `policy
-check` mantiene `tool registry: ningún tool enabled` mientras eso
-siga. El siguiente paso técnico antes de Beta-1 es **sandbox real
-+ filesystem boundaries + confirmation gate ejecutable**:
-implementar el wrapper que el contrato describe, no agregar más
-entradas al registry.
+que ejercita la invocación de una tool sin ejecutarla, y los
+tests 17-20 prueban el **binding completo plan-aprobado +
+tool-simulada** (`watson claw simulate-execute`) que corre toda
+la cadena de gates (kill switch, policy, approval, registry) y
+termina en `Status: simulated-only` sin ejecutar el binario.
+`policy check` mantiene `tool registry: ningún tool enabled`
+mientras eso siga. El siguiente paso técnico antes de Beta-1 es
+**sandbox real + filesystem boundaries + confirmation gate
+ejecutable**: implementar el wrapper que el contrato describe,
+no agregar más entradas al registry.
 
 ## Amenazas principales
 

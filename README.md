@@ -344,6 +344,23 @@ La simulación valida que la tool exista en el registry y esté
 `tool_unknown`, `tool_enabled_forbidden`), e imprime el plan
 `Status: simulated-only`. **No ejecuta binarios.**
 
+Para probar el binding completo plan-aprobado + tool simulada,
+sin ejecutar nada:
+
+```bash
+watson claw simulate-execute --mode desarrollo --tool read_file <plan-basename>
+watson claw simexec --mode desarrollo --tool read_file <plan-basename>
+```
+
+`simulate-execute` corre la cadena entera (kill switch, policy,
+plan exists, approval, tool registry) y termina en
+`Status: simulated-only`. 5 nuevos eventos auditados:
+`simulate_execute_allowed`, `simulate_execute_missing_approval`,
+`simulate_execute_unknown_tool`,
+`simulate_execute_blocked_kill_switch`,
+`simulate_execute_blocked_policy`. **Sigue sin ejecutar el binario
+real.**
+
 ## OpenClaw audit log
 
 Bitácora estructurada y append-only de eventos de OpenClaw (status,

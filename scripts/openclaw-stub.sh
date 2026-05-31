@@ -67,6 +67,7 @@ Uso:
   openclaw-stub.sh status
   openclaw-stub.sh run [--mode <modo>] [--tag <tag>] [--priority <low|normal|high>] "tarea"
   openclaw-stub.sh execute --mode <modo> <filename>
+  openclaw-stub.sh simulate-execute --mode <modo> --tool <name> <filename>
   openclaw-stub.sh kill ["razón"]
   openclaw-stub.sh unkill
   openclaw-stub.sh policy [show|path|check]
@@ -433,6 +434,125 @@ EOF_PLAN
         echo "Estado: blocked-by-design"
         echo "Razón: execution runtime no implementado en Beta-0"
         exit 1
+        ;;
+    simulate-execute|simexec)
+        # Une un plan aprobado con una tool del registry y simula
+        # su invocación. Corre la cadena completa de gates (kill
+        # switch, policy, plan exists, approval) + valida que la
+        # tool exista en el registry y esté disabled (delega en
+        # openclaw-simulate-tool.sh). NO ejecuta el binario real;
+        # imprime un plan combinado y audita.
+        mode="desarrollo"
+        tool=""
+        while [ "$#" -gt 0 ]; do
+            case "${1:-}" in
+                --mode)
+                    shift || true
+                    if [ -z "${1:-}" ] || [[ "${1:-}" == --* ]]; then
+                        echo "Error: --mode requiere un valor." >&2; usage >&2; exit 1
+                    fi
+                    mode="$1"; shift || true
+                    ;;
+                --tool)
+                    shift || true
+                    if [ -z "${1:-}" ] || [[ "${1:-}" == --* ]]; then
+                        echo "Error: --tool requiere un valor." >&2; usage >&2; exit 1
+                    fi
+                    tool="$1"; shift || true
+                    ;;
+                *)
+                    break
+                    ;;
+            esac
+        done
+        file="${1:-}"
+
+        # Basename estricto (idem execute / approve-plan).
+        case "$file" in
+            ""|*/*|*..*)
+                echo "Error: filename inválido (solo basename, sin '/' ni '..'): '${file:-}'" >&2
+                exit 1
+                ;;
+        esac
+        # tool requerida + nombre seguro (consistente con simulate-tool.sh).
+        if [ -z "$tool" ] || ! echo "$tool" | grep -qE '^[a-z][a-z0-9_]*$'; then
+            echo "Error: --tool requerido y debe matchear [a-z][a-z0-9_]*: '${tool:-}'" >&2
+            exit 1
+        fi
+        if ! mode_allowed "$mode"; then
+            echo "Error: modo '$mode' no permitido." >&2
+            echo "Modos permitidos: ${ALLOWED_MODES[*]}" >&2
+            exit 1
+        fi
+
+        ws_dir="$WORKSPACES_DIR/$mode"
+        plan_file="$ws_dir/plans/$file"
+        if [ ! -f "$plan_file" ]; then
+            echo "Error: plan no encontrado: $plan_file" >&2
+            exit 1
+        fi
+
+        # 1) Kill switch (gana sobre todo).
+        if [ -f "$KILL_SWITCH" ]; then
+            audit_log "simulate_execute_blocked_kill_switch" "$mode" "blocked" "tool=$tool file=$file"
+            echo "OpenClaw bloqueado por KILL_SWITCH" >&2
+            echo "Archivo: $KILL_SWITCH" >&2
+            exit 1
+        fi
+
+        # 2) Policy gate.
+        pol_script="$(dirname "$0")/openclaw-policy.sh"
+        if [ -x "$pol_script" ]; then
+            if ! "$pol_script" check >/dev/null 2>&1; then
+                audit_log "simulate_execute_blocked_policy" "$mode" "blocked" "tool=$tool file=$file"
+                echo "Error: policy check falló. Corré '$pol_script check' para ver el detalle." >&2
+                exit 1
+            fi
+        else
+            audit_log "simulate_execute_blocked_policy" "$mode" "blocked" "openclaw-policy.sh ausente tool=$tool"
+            echo "Error: openclaw-policy.sh no presente; no puedo simular sin policy gate." >&2
+            exit 1
+        fi
+
+        # 3) Aprobación local (sidecar status=approved).
+        state_file="${plan_file}.state"
+        approved=0
+        if [ -f "$state_file" ] && grep -q "^status=approved$" "$state_file"; then
+            approved=1
+        fi
+        if [ "$approved" -ne 1 ]; then
+            audit_log "simulate_execute_missing_approval" "$mode" "blocked" "tool=$tool file=$file"
+            echo "Plan no aprobado. Usa: watson ws approve-plan $mode $file" >&2
+            exit 1
+        fi
+
+        # 4) Tool registry: delegamos en simulate-tool.sh. Si la
+        # tool no existe o tiene enabled: true, el delegate sale
+        # != 0 y audita lo suyo (tool_unknown / tool_enabled_forbidden);
+        # nosotros sumamos simulate_execute_unknown_tool para marcar
+        # el fallo a nivel binding.
+        sim_script="$(dirname "$0")/openclaw-simulate-tool.sh"
+        if [ ! -x "$sim_script" ]; then
+            audit_log "simulate_execute_unknown_tool" "$mode" "fail" "openclaw-simulate-tool.sh ausente tool=$tool"
+            echo "Error: openclaw-simulate-tool.sh no presente." >&2
+            exit 1
+        fi
+        if ! "$sim_script" "$tool" >/dev/null 2>&1; then
+            audit_log "simulate_execute_unknown_tool" "$mode" "fail" "tool=$tool file=$file"
+            echo "Error: tool '$tool' no pasa la simulación de registry (corré '$sim_script $tool' para detalle)." >&2
+            exit 1
+        fi
+
+        # Binding válido. Audit + plan combinado. exit 0: el binding
+        # se completó como se esperaba (estado terminal correcto).
+        audit_log "simulate_execute_allowed" "$mode" "ok" "tool=$tool file=$file"
+        echo "OpenClaw Simulated Execution"
+        echo "Plan: $plan_file"
+        echo "Tool: $tool"
+        echo "Status: simulated-only"
+        echo "Execution: disabled"
+        echo "Reason: Beta-1 preparation, no runtime real"
+        exit 0
         ;;
     *)
         echo "Subcomando desconocido: $cmd" >&2
