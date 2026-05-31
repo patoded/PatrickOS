@@ -375,6 +375,42 @@ fi
 run_fail "23. ws show-execution desarrollo '../bad' → rechazado" \
     "$WS" show-execution desarrollo "../bad"
 
+# ---------------------------------------------------------------
+# 24-26) Execution manifest index (creado por simulate-execute)
+# ---------------------------------------------------------------
+# A esta altura ya corrieron varios simulate-execute exitosos en
+# tests 18 y 21, así que index.tsv debería existir.
+idx_file="$SANDBOX/workspaces/desarrollo/executions/index.tsv"
+
+# 24: index.tsv existe y tiene al menos 1 línea (el simulate-execute
+# de tests 18/21 debió appendear).
+if [ -f "$idx_file" ] && [ -s "$idx_file" ]; then
+    idx_lines=$(wc -l < "$idx_file" | tr -d ' ')
+    ok "24. simulate-execute crea executions/index.tsv ($idx_lines línea/s)"
+else
+    fail_msg "24. executions/index.tsv ausente o vacío en $idx_file"
+fi
+
+# 25: ws recent-executions imprime al menos 1 línea con read_file
+rec_out="$("$WS" recent-executions desarrollo 2>&1)"
+rec_rc=$?
+if [ "$rec_rc" -eq 0 ] && echo "$rec_out" | grep -q "read_file"; then
+    ok "25. ws recent-executions imprime al menos un entry con read_file"
+else
+    fail_msg "25. ws recent-executions (rc=$rec_rc o sin read_file en output)"
+    echo "$rec_out" | tail -n 4 | sed 's/^/        /'
+fi
+
+# 26: ws search-executions read_file matchea
+srch_out="$("$WS" search-executions desarrollo read_file 2>&1)"
+srch_rc=$?
+if [ "$srch_rc" -eq 0 ] && echo "$srch_out" | grep -q "read_file"; then
+    ok "26. ws search-executions read_file → matchea"
+else
+    fail_msg "26. ws search-executions read_file (rc=$srch_rc o sin matches)"
+    echo "$srch_out" | tail -n 4 | sed 's/^/        /'
+fi
+
 echo
 echo "Resumen: OK=$ok_count FAIL=$fail_count"
 exit "$fail_count"

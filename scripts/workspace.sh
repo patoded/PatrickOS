@@ -42,6 +42,9 @@ Uso:
   workspace.sh executions <modo>
   workspace.sh last-execution <modo>
   workspace.sh show-execution <modo> <archivo|latest>
+  workspace.sh execution-index <modo>
+  workspace.sh recent-executions <modo> [n]
+  workspace.sh search-executions <modo> <texto>
 
 Modos permitidos: consulta, clase, video, desarrollo, ia, general
 EOF
@@ -462,6 +465,63 @@ case "$cmd" in
             exit 1
         fi
         cat "$manifest"
+        ;;
+    execution-index)
+        mode="${1:-}"
+        require_mode "$mode"
+        idx="$WORKSPACES_DIR/$mode/executions/index.tsv"
+        if [ ! -f "$idx" ]; then
+            echo "Sin índice de ejecuciones."
+            exit 0
+        fi
+        cat "$idx"
+        ;;
+    recent-executions)
+        mode="${1:-}"
+        require_mode "$mode"
+        shift || true
+        n="${1:-5}"
+        if ! [[ "$n" =~ ^[0-9]+$ ]]; then
+            echo "Error: n debe ser entero. Recibido: '$n'." >&2
+            exit 1
+        fi
+        idx="$WORKSPACES_DIR/$mode/executions/index.tsv"
+        if [ ! -f "$idx" ]; then
+            echo "Sin ejecuciones."
+            exit 0
+        fi
+        # Reformat: timestamp | tool | manifest | plan | status
+        # (omitimos mode — redundante con la query).
+        tail -n "$n" "$idx" | awk -F'\t' '
+            { printf "%s | %s | %s | %s | %s\n", $1, $3, $4, $5, $6 }'
+        ;;
+    search-executions)
+        mode="${1:-}"
+        require_mode "$mode"
+        shift || true
+        needle="${*:-}"
+        needle="${needle#"${needle%%[![:space:]]*}"}"
+        needle="${needle%"${needle##*[![:space:]]}"}"
+        if [ -z "$needle" ]; then
+            echo "Error: falta texto a buscar. Uso: workspace.sh search-executions <modo> <texto>" >&2
+            exit 1
+        fi
+        idx="$WORKSPACES_DIR/$mode/executions/index.tsv"
+        if [ ! -f "$idx" ]; then
+            echo "Sin coincidencias."
+            exit 0
+        fi
+        # grep -iF: case-insensitive fixed-string contra la línea
+        # completa. Matchea tool / manifest / plan / status (también
+        # ts/mode, pero los campos clave del search son los del
+        # medio).
+        matches=$(grep -iF -- "$needle" "$idx" || true)
+        if [ -z "$matches" ]; then
+            echo "Sin coincidencias."
+            exit 0
+        fi
+        printf '%s\n' "$matches" | awk -F'\t' '
+            { printf "%s | %s | %s | %s | %s\n", $1, $3, $4, $5, $6 }'
         ;;
     show-plan)
         mode="${1:-}"
