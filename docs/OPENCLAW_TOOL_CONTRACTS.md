@@ -213,6 +213,33 @@ La simulación valida que la tool existe en el registry, que su
 exit 1 + `tool_unknown`. Tool con `enabled: true` → exit 1 +
 `tool_enabled_forbidden`. **Ningún path ejecuta nada.**
 
+### Binding plan + tool simulada
+
+Para probar el flujo entero (plan dry-run aprobado + invocación
+de una tool del registry, todo sin ejecutar nada):
+
+```bash
+watson claw simulate-execute --mode <m> --tool <name> <plan-basename>
+watson claw simexec --mode <m> --tool <name> <plan-basename>
+```
+
+`simulate-execute` corre la cadena completa de gates en este orden:
+
+1. Basename estricto + tool name `[a-z][a-z0-9_]*` + mode permitido.
+2. `KILL_SWITCH` → `simulate_execute_blocked_kill_switch`.
+3. `policy check` → `simulate_execute_blocked_policy`.
+4. Plan existe en `<workspace>/plans/<basename>`.
+5. Sidecar `<plan>.state` con `status=approved` →
+   `simulate_execute_missing_approval` si no.
+6. Tool pasa `openclaw-simulate-tool.sh` (registry OK + `enabled:
+   false`) → `simulate_execute_unknown_tool` si no.
+7. Todo OK → `simulate_execute_allowed` + plan combinado
+   `OpenClaw Simulated Execution / Plan: … / Tool: … /
+   Status: simulated-only`. Exit 0.
+
+**No ejecuta el binario real.** Es el harness para probar el
+flujo completo de Beta-1 sin prender ninguna herramienta.
+
 El validador hace tres cosas:
 
 1. Confirma los invariantes baseline (`version: 1`,

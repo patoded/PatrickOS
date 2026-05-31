@@ -27,8 +27,19 @@ habilitar nada: `scripts/openclaw-simulate-tool.sh` y los comandos
 el camino de invocación de una tool — validan el registry, exigen
 `enabled: false`, auditan el intento — pero NO ejecutan ningún
 binario. Eventos auditados nuevos: `tool_simulated`,
-`tool_unknown`, `tool_enabled_forbidden`. Habilitar la primera
-entrada sigue requiriendo PR explícito que ataque las fases 3-6 y 8.
+`tool_unknown`, `tool_enabled_forbidden`. **El binding completo
+plan → approval → tool simulada** también está en código vía
+`watson claw simulate-execute --mode <m> --tool <t> <file>`:
+corre la cadena entera de gates (kill switch, policy, plan
+exists, approval, tool registry) y termina en
+`Status: simulated-only` con `simulate_execute_allowed` en el
+audit. Cualquier gate fallido emite su evento específico
+(`simulate_execute_missing_approval`,
+`simulate_execute_unknown_tool`,
+`simulate_execute_blocked_kill_switch`,
+`simulate_execute_blocked_policy`) y aborta. Habilitar la
+primera entrada sigue requiriendo PR explícito que ataque las
+fases 3-6 y 8.
 
 Documentos hermanos:
 

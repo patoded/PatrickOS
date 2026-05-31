@@ -142,20 +142,18 @@ disparar, el evento de audit esperado, y el resultado esperado.
 ## Automatización actual
 
 A partir de v0.4 hay un runner automático sobre los gates de
-Beta-0; cubre items 1, 2, 3, 4 (execute aprobado → blocked-by-design),
-5, 6 (tag inválido), 7 (priority inválida), 8 (tools sentinel),
-9 (path traversal en execute), 10 (modo inválido), 11 (policy
-sana), 12 (viewer del registry), **13 (tools registry tampered con
-`enabled: true` → contracts check FAIL)**, **14 (simulate tool
-inexistente → exit 1, audit `tool_unknown`)**, **15 (simulate
-sobre registry tampered con `enabled: true` → exit 1, audit
-`tool_enabled_forbidden`)** y **16 (simulate tool conocida
-disabled → exit 0 con `Status: simulated-only` + audit
-`tool_simulated`, sin ejecutar nada)**. Tests 13 y 15 cubren
-explícitamente el item 10 del catálogo (modificar policy/registry
-desde un actor). Los items restantes (sandbox, sudo, red, shell
-libre, plugin externo) siguen documentados — quedan para Beta-1
-cuando el sandbox de proceso esté en código.
+Beta-0; cubre items 1-12 (gates de policy/kill switch/approval/
+basename/tag/priority/modo/viewer/policy sano), **13 (tools
+registry tampered con `enabled: true` → contracts check FAIL)**,
+**14-16 (camino de simulación de tools: unknown, registry
+tampered, simulated-only)** y **17-20 (binding completo
+simulate-execute: missing approval, approved + tool conocida →
+simulated-only, tool desconocida, filename traversal)**. Tests
+13 y 15 cubren el item 10 (modificar policy/registry desde un
+actor); test 20 refuerza el item 5 (path traversal) sobre el
+binding. Los items restantes (sandbox, sudo, red, shell libre,
+plugin externo) siguen documentados — quedan para Beta-1 cuando
+el sandbox de proceso esté en código.
 
 ```bash
 scripts/openclaw-negative-tests.sh        # runner directo

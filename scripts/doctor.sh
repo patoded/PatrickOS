@@ -430,6 +430,45 @@ run_diagnostic() {
     fi
     echo
 
+    # 13) Simulated execution binding smoke. Genera un plan
+    # dedicado, prueba que simulate-execute SIN aprobar bloquea,
+    # luego aprueba, luego simulate-execute con tool conocida →
+    # simulated-only, y con tool unknown → rechazado.
+    echo "--- simulated execution binding smoke ---"
+    sebind_rc=0
+    PATRICK_OS_HOME="$SANDBOX" "$oc_script" run --mode desarrollo --tag doctor-binding --priority high "binding smoke" > /dev/null 2>&1 || sebind_rc=1
+    # Tomar el último plan creado (más reciente por timestamp en el nombre).
+    sebind_basename=""
+    for p in "$plans_dir"/*-plan.md; do
+        [ -f "$p" ] && sebind_basename="$(basename "$p")"
+    done
+    if [ "$sebind_rc" -ne 0 ] || [ -z "$sebind_basename" ]; then
+        warn "simulated execution binding smoke omitido (no se generó plan)"
+    else
+        # Defensivo: borramos cualquier .state previo del basename
+        # para asegurar que la primera prueba sea sobre un plan
+        # NO aprobado.
+        rm -f "$plans_dir/$sebind_basename.state"
+        se1_out="$(PATRICK_OS_HOME="$SANDBOX" "$oc_script" simulate-execute --mode desarrollo --tool read_file "$sebind_basename" 2>&1)"
+        se1_rc=$?
+        PATRICK_OS_HOME="$SANDBOX" "$ws_script" approve-plan desarrollo "$sebind_basename" > /dev/null 2>&1
+        se2_out="$(PATRICK_OS_HOME="$SANDBOX" "$oc_script" simulate-execute --mode desarrollo --tool read_file "$sebind_basename" 2>&1)"
+        se2_rc=$?
+        se3_out="$(PATRICK_OS_HOME="$SANDBOX" "$oc_script" simulate-execute --mode desarrollo --tool unknown_xyz "$sebind_basename" 2>&1)"
+        se3_rc=$?
+        if [ "$se1_rc" -ne 0 ] && echo "$se1_out" | grep -q "approve-plan" \
+           && [ "$se2_rc" -eq 0 ] && echo "$se2_out" | grep -q "Status: simulated-only" \
+           && [ "$se3_rc" -ne 0 ]; then
+            ok "simulated execution binding (pending → approve → simulated-only; unknown rechazado)"
+        else
+            fail "simulated execution binding (rc1=$se1_rc rc2=$se2_rc rc3=$se3_rc)"
+            show_tail "$se1_out"
+            show_tail "$se2_out"
+            show_tail "$se3_out"
+        fi
+    fi
+    echo
+
     echo "Resumen: OK=$ok_count WARN=$warn_count FAIL=$fail_count"
 }
 
