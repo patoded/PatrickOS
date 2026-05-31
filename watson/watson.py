@@ -32,6 +32,7 @@ _ALIAS_MAP = {
     "nt": "negative-tests",
     "negtest": "negative-tests",
     "beta1": "readiness",
+    "rpt": "report",
     "n": "nota",
     "ns": "notas",
     "note": "nota",
@@ -64,6 +65,7 @@ _PAYLOAD_PREFIXES = (
     "contracts",
     "doctor",
     "policy",
+    "report",
     "audit",
     "tools",
     "negtest",
@@ -78,6 +80,7 @@ _PAYLOAD_PREFIXES = (
     "doc",
     "pol",
     "aud",
+    "rpt",
     "tls",
     "ws",
     "nt",
@@ -166,6 +169,8 @@ def mostrar_ayuda():
     print("  claw negative-tests          idem, vía openclaw-stub")
     print("  readiness (beta1)            gate de Beta-1 readiness (ready_for_simulated_beta1=yes)")
     print("  claw readiness               idem, vía openclaw-stub")
+    print("  report (rpt) [--mode <m>] [--out <f>]  reporte consolidado markdown")
+    print("  claw report                  idem, vía openclaw-stub")
     print("  modo consulta              flujo clínico")
     print("  modo clase                 flujo docente")
     print("  modo video                 flujo de edición")
@@ -211,6 +216,8 @@ def mostrar_ayuda():
     print("  watson ws search-executions desarrollo read_file")
     print("  watson readiness")
     print("  watson beta1 readiness")
+    print("  watson report")
+    print("  watson report --mode desarrollo --out /tmp/openclaw-report.md")
 
 
 def mostrar_version():
@@ -327,6 +334,17 @@ def ejecutar_comando(comando, pregunta=None):
         else:
             args = pregunta.split()
             ejecutar_seguro([script, *args], f"openclaw-contracts.sh {args[0]}")
+
+    elif comando == "report":
+        # Reporte consolidado markdown. Sin args imprime a stdout
+        # con modo default desarrollo; con args ('--mode <m>',
+        # '--out <file>') se forwardean al script.
+        script = str(SCRIPTS_DIR / "openclaw-report.sh")
+        if pregunta is None or not pregunta.strip():
+            ejecutar_seguro([script], "openclaw-report.sh")
+        else:
+            args = pregunta.split()
+            ejecutar_seguro([script, *args], f"openclaw-report.sh {args[0]}")
 
     elif comando == "readiness":
         # Gate explícito de Beta-1 readiness. Sin args corre el

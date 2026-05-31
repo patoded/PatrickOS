@@ -385,25 +385,29 @@ run_diagnostic() {
 
     # 11) Negative tests smoke. La suite verifica que cada gate
     # bloquea su escenario malicioso. FAIL=0 = todos los gates
-    # comportándose como contrato.
-    echo "--- negative tests smoke ---"
-    nt_script="$script_dir/openclaw-negative-tests.sh"
-    if [ ! -x "$nt_script" ]; then
-        warn "openclaw-negative-tests.sh no presente o sin +x en $script_dir"
-    else
-        # Sandbox propio del runner (PATRICK_OS_HOME no override acá);
-        # NO contamina /tmp/patrick-doctor.
-        nt_out="$("$nt_script" 2>&1)"
-        nt_rc=$?
-        if [ "$nt_rc" -eq 0 ]; then
-            nt_summary=$(echo "$nt_out" | grep '^Resumen:' | tail -1)
-            ok "negative tests OK ($nt_summary)"
+    # comportándose como contrato. Guard de recursión: si negative-
+    # tests llamó hasta acá (vía test 27 → report → readiness →
+    # doctor), salta este smoke para no entrar en loop.
+    if [ -z "${PATRICK_DOCTOR_SKIP_NEGATIVE_TESTS:-}" ]; then
+        echo "--- negative tests smoke ---"
+        nt_script="$script_dir/openclaw-negative-tests.sh"
+        if [ ! -x "$nt_script" ]; then
+            warn "openclaw-negative-tests.sh no presente o sin +x en $script_dir"
         else
-            fail "negative tests (exit=$nt_rc = nº de FAILs)"
-            show_tail "$nt_out"
+            # Sandbox propio del runner (PATRICK_OS_HOME no override acá);
+            # NO contamina /tmp/patrick-doctor.
+            nt_out="$("$nt_script" 2>&1)"
+            nt_rc=$?
+            if [ "$nt_rc" -eq 0 ]; then
+                nt_summary=$(echo "$nt_out" | grep '^Resumen:' | tail -1)
+                ok "negative tests OK ($nt_summary)"
+            else
+                fail "negative tests (exit=$nt_rc = nº de FAILs)"
+                show_tail "$nt_out"
+            fi
         fi
+        echo
     fi
-    echo
 
     # 12) Tool simulation smoke. Verifica que simular dos tools
     # conocidas (read_file + git_status) termine en simulated-only,
@@ -429,6 +433,34 @@ run_diagnostic() {
         fi
     fi
     echo
+
+    # 14) Report smoke. openclaw-report.sh consolida planes +
+    # ejecuciones + audit + readiness + tests en un markdown.
+    # Validamos que --out crea el archivo y que el contenido tiene
+    # el header y la línea ready_for_real_execution=no esperada.
+    # Guard de recursión: openclaw-report.sh setea
+    # PATRICK_DOCTOR_SKIP_REPORT=1 cuando llama readiness; ese env
+    # llega al doctor anidado, así que skip ESTA sección si está.
+    if [ -z "${PATRICK_DOCTOR_SKIP_REPORT:-}" ]; then
+        echo "--- report smoke ---"
+        rp_script="$script_dir/openclaw-report.sh"
+        rp_file="$SANDBOX/openclaw-report.md"
+        if [ ! -x "$rp_script" ]; then
+            warn "openclaw-report.sh no presente o sin +x en $script_dir"
+        else
+            rp_out="$(PATRICK_OS_HOME="$SANDBOX" "$rp_script" --mode desarrollo --out "$rp_file" 2>&1)"
+            rp_rc=$?
+            if [ "$rp_rc" -eq 0 ] && [ -f "$rp_file" ] \
+               && grep -q "^# OpenClaw Report$" "$rp_file" \
+               && grep -q "^\* ready_for_real_execution=no$" "$rp_file"; then
+                ok "report ($rp_file: header + ready_for_real_execution=no)"
+            else
+                fail "report (rc=$rp_rc file=$([ -f "$rp_file" ] && echo present || echo missing))"
+                show_tail "$rp_out"
+            fi
+        fi
+        echo
+    fi
 
     # 13b) Readiness smoke. openclaw-readiness.sh corre la cadena
     # entera (policy + contracts + tools + negative-tests + doctor

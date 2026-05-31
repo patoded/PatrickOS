@@ -292,6 +292,18 @@ else
     warn "openclaw-readiness.sh ausente: $rd_script"
 fi
 
+# 23) openclaw-report.sh presente y ejecutable (reporte consolidado).
+rp_script="$scripts_dir/openclaw-report.sh"
+if [ -f "$rp_script" ]; then
+    if [ -x "$rp_script" ]; then
+        ok "openclaw-report.sh presente y ejecutable: $rp_script"
+    else
+        warn "openclaw-report.sh presente pero no ejecutable: $rp_script (chmod +x)"
+    fi
+else
+    warn "openclaw-report.sh ausente: $rp_script"
+fi
+
 echo
 echo "Resumen: WARN=$warn_count FAIL=$fail_count"
 exit "$fail_count"

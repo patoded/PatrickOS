@@ -146,7 +146,7 @@ case "$target_version" in
         done
         # Scripts nuevos del safety foundation (Beta-1 prerequisites).
         # No se exigen +x acá — eso lo destapa check-installed.
-        for s in openclaw-contracts.sh openclaw-negative-tests.sh openclaw-simulate-tool.sh openclaw-readiness.sh; do
+        for s in openclaw-contracts.sh openclaw-negative-tests.sh openclaw-simulate-tool.sh openclaw-readiness.sh openclaw-report.sh; do
             if [ -f "$repo_dir/scripts/$s" ]; then
                 ok "script OpenClaw v0.4: scripts/$s"
             else
