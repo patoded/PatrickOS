@@ -8,11 +8,16 @@ que orquesta el sistema desde la línea de comandos y se apoya en IA local vía
 ## Estado
 
 `v0.2.0-alpha` publicada (código y docs); `v0.3.0-alpha` cerrada con
-OpenClaw Beta-0 como capa dry-run segura. **Ciclo `v0.4.0-dev` iniciado
-después de `v0.3.0-alpha`**, enfocado en planning de OpenClaw Beta-1
-(tool contracts accionables, sandbox, filesystem boundaries, human
-confirmation gate, negative tests). Sin ejecución real, sin runtime,
-sin ISO `v0.4`. Ver `docs/V0.4_PLAN.md` y `docs/OPENCLAW_BETA1_PLAN.md`.
+OpenClaw Beta-0 como capa dry-run segura. **`v0.4.0-alpha` preflight
+listo: Watson reporta `v0.4.0-alpha`** y la safety foundation de
+OpenClaw Beta-1 simulado está completa — contracts validator, tool
+allowlist `disabled`, simulated tool execution, simulated execution
+binding, execution manifests + index/search, readiness gate, audit
+report. **`ready_for_real_execution=no` sigue siendo invariante por
+diseño.** Próximo paso: build ISO `v0.4.0-alpha` (PR aparte). Ver
+[`docs/V0.4_ALPHA_CHECKLIST.md`](docs/V0.4_ALPHA_CHECKLIST.md),
+[`docs/V0.4_PLAN.md`](docs/V0.4_PLAN.md) y
+[`docs/OPENCLAW_BETA1_PLAN.md`](docs/OPENCLAW_BETA1_PLAN.md).
 
 - Watson CLI con modos (consulta, clase, video, desarrollo, IA, preguntar IA),
   más comandos meta: `ayuda`, `version`, `estado`, `sistema`, `validar`,
@@ -228,7 +233,7 @@ watson inicio   # alias: i, home, panel
 
 Secciones (todas locales, sin red):
 
-- **Estado Watson:** versión actual (`v0.4.0-dev`).
+- **Estado Watson:** versión actual (`v0.4.0-alpha`).
 - **Sistema:** `hostname`, `uptime -p` (con fallback a `uptime` plano si
   la flag no está soportada), y `free -h` resumida.
 - **Daily:** delega en `daily.sh` si está presente y ejecutable. Si
@@ -305,7 +310,7 @@ genera con header markdown y el invariante de no ejecución real.
 
 ## OpenClaw v0.4 Safety Foundation
 
-A partir de `v0.4.0-dev` hay dos herramientas adicionales para
+A partir de `v0.4.0-alpha` hay dos herramientas adicionales para
 cerrar la base de seguridad antes de cualquier paso hacia Beta-1
 con ejecución real:
 

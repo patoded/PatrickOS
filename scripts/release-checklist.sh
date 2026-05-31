@@ -86,12 +86,11 @@ else
 fi
 
 # 4) Checklist por familia de versión (v0.2 → V0.2_ALPHA_CHECKLIST.md,
-#    v0.3 → V0.3_ALPHA_CHECKLIST.md, etc.). v0.4 todavía no tiene
-#    checklist propio — el plan/release notes cubren el estado del
-#    ciclo; cuando aparezca, se agrega acá.
+#    v0.3 → V0.3_ALPHA_CHECKLIST.md, v0.4 → V0.4_ALPHA_CHECKLIST.md).
 case "$target_version" in
     v0.2.*) checklist="$repo_dir/docs/V0.2_ALPHA_CHECKLIST.md" ;;
     v0.3.*) checklist="$repo_dir/docs/V0.3_ALPHA_CHECKLIST.md" ;;
+    v0.4.*) checklist="$repo_dir/docs/V0.4_ALPHA_CHECKLIST.md" ;;
     *)      checklist="" ;;
 esac
 if [ -n "$checklist" ]; then

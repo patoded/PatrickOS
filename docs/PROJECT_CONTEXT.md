@@ -33,13 +33,19 @@ queda como decisión separada (ver `docs/V0.2_ALPHA_CHECKLIST.md` y
 `scripts/release-checklist.sh v0.2.0-alpha`).
 
 `v0.3.0-alpha` publicado (código + docs + ISO). Ciclo actual:
-**`v0.4.0-dev` iniciado**. Watson reporta `v0.4.0-dev`. Foco:
-**planning de OpenClaw Beta-1** — tool contracts accionables,
-allowlist concreta, sandbox de proceso, filesystem boundaries,
-human confirmation gate y negative tests. **Ejecución real sigue
-NO habilitada**; OpenClaw Beta-0 sigue como capa dry-run cerrada
-mientras Beta-1 se diseña. Ver `docs/V0.4_PLAN.md`,
-`docs/OPENCLAW_BETA1_PLAN.md` y `docs/OPENCLAW_NEGATIVE_TESTS.md`.
+**`v0.4.0-alpha` preflight listo**. Watson reporta
+`v0.4.0-alpha`. Foco cerrado: **safety foundation de OpenClaw
+Beta-1 simulada** — contracts validator, tool allowlist
+declarada con `enabled: false`, simulated tool execution,
+simulated execution binding plan→tool, execution manifests,
+manifest index/search, readiness gate, audit report
+consolidado. **`ready_for_real_execution=no` sigue siendo
+invariante por diseño**; OpenClaw runtime real NO está
+implementado. **Siguiente paso: build ISO `v0.4.0-alpha`** en
+PR aparte (build + squashfs inspection + QEMU smoke + GitHub
+release asset + tag). Ver `docs/V0.4_ALPHA_CHECKLIST.md`,
+`docs/V0.4_PLAN.md`, `docs/OPENCLAW_BETA1_PLAN.md` y
+`docs/OPENCLAW_NEGATIVE_TESTS.md`.
 
 La Alpha incluye:
 
