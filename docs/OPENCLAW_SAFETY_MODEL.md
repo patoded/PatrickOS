@@ -32,10 +32,16 @@ tool-simulada** (`watson claw simulate-execute`) que corre toda
 la cadena de gates (kill switch, policy, approval, registry) y
 termina en `Status: simulated-only` sin ejecutar el binario.
 `policy check` mantiene `tool registry: ningún tool enabled`
-mientras eso siga. El siguiente paso técnico antes de Beta-1 es
-**sandbox real + filesystem boundaries + confirmation gate
-ejecutable**: implementar el wrapper que el contrato describe,
-no agregar más entradas al registry.
+mientras eso siga. El **gate de readiness**
+(`scripts/openclaw-readiness.sh`) materializa el avance como
+ejecutable: corre toda la cadena de controles (policy + contracts
++ tools + negative tests + doctor + execute gate + simulated
+binding) y reporta `ready_for_simulated_beta1=yes` /
+`ready_for_real_execution=no` mientras esos invariantes se
+cumplan. El siguiente paso técnico antes de Beta-1 es **sandbox
+real + filesystem boundaries + confirmation gate ejecutable**:
+implementar el wrapper que el contrato describe, no agregar más
+entradas al registry.
 
 ## Amenazas principales
 

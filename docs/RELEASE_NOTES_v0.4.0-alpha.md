@@ -20,6 +20,12 @@ no de runtime real.
 - Sandbox design (bwrap / firejail / equivalente).
 - Human confirmation gate por step.
 - Simulated execution sobre el `blocked-by-design` actual.
+- **Beta-1 readiness gate** (`scripts/openclaw-readiness.sh`,
+  `watson readiness`, `make readiness`) — evalúa policy +
+  contracts + tools + negative tests + doctor + execute gate +
+  simulated binding y reporta `ready_for_simulated_beta1=yes` /
+  `ready_for_real_execution=no` (este último es `[BLOCKED]` por
+  diseño en Beta-0/v0.4).
 
 ## No incluido todavía
 

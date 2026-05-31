@@ -31,6 +31,7 @@ _ALIAS_MAP = {
     "ctr": "contracts",
     "nt": "negative-tests",
     "negtest": "negative-tests",
+    "beta1": "readiness",
     "n": "nota",
     "ns": "notas",
     "note": "nota",
@@ -58,6 +59,7 @@ _PAYLOAD_PREFIXES = (
     "preguntar ia",
     "negative-tests",
     "workspace",
+    "readiness",
     "openclaw",
     "contracts",
     "doctor",
@@ -69,6 +71,7 @@ _PAYLOAD_PREFIXES = (
     "nota",
     "todo",
     "tarea",
+    "beta1",
     "claw",
     "ask",
     "ctr",
@@ -155,6 +158,8 @@ def mostrar_ayuda():
     print("  contracts (ctr) [check|show|path] validador de contratos (registry baseline + shape)")
     print("  negative-tests (nt|negtest)  suite negativa de OpenClaw (gates deben bloquear)")
     print("  claw negative-tests          idem, vía openclaw-stub")
+    print("  readiness (beta1)            gate de Beta-1 readiness (ready_for_simulated_beta1=yes)")
+    print("  claw readiness               idem, vía openclaw-stub")
     print("  modo consulta              flujo clínico")
     print("  modo clase                 flujo docente")
     print("  modo video                 flujo de edición")
@@ -194,6 +199,8 @@ def mostrar_ayuda():
     print("  watson tool simulate read_file")
     print("  watson simtool git_status")
     print("  watson claw simulate-execute --mode desarrollo --tool read_file 20260530-…-plan.md")
+    print("  watson readiness")
+    print("  watson beta1 readiness")
 
 
 def mostrar_version():
@@ -310,6 +317,19 @@ def ejecutar_comando(comando, pregunta=None):
         else:
             args = pregunta.split()
             ejecutar_seguro([script, *args], f"openclaw-contracts.sh {args[0]}")
+
+    elif comando == "readiness":
+        # Gate explícito de Beta-1 readiness. Sin args corre el
+        # default (beta1); con args ('beta1', '--verbose') se
+        # forwardean. NO ejecuta herramientas reales — internamente
+        # corre los gates ya existentes y agrega un blocked-by-design
+        # para 'real execution runtime' como invariante esperada.
+        script = str(SCRIPTS_DIR / "openclaw-readiness.sh")
+        if pregunta is None or not pregunta.strip():
+            ejecutar_seguro([script], "openclaw-readiness.sh")
+        else:
+            args = pregunta.split()
+            ejecutar_seguro([script, *args], f"openclaw-readiness.sh {args[0]}")
 
     elif comando == "negative-tests":
         # Suite de pruebas negativas que verifica que cada gate

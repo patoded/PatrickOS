@@ -263,6 +263,23 @@ respetan). `clean --yes` borra todo el contenido y recrea el README;
 sin `--yes` solo imprime cómo confirmar y sale en 1. Sandbox vía
 `PATRICK_OS_HOME=/tmp/...` (mismo override que usa `claw`).
 
+## OpenClaw Beta-1 readiness gate
+
+`watson readiness` (alias `watson beta1`, también `watson claw
+readiness`) corre el gate explícito de Beta-1 y reporta:
+
+```
+ready_for_simulated_beta1=yes
+ready_for_real_execution=no
+```
+
+`[BLOCKED] real execution runtime not implemented` es estado por
+**diseño** en Beta-0/v0.4 y NO cuenta como FAIL. Lo que sí cuenta
+es la cadena de OK: `policy`, `contracts`, `tools registry
+disabled`, `negative tests`, `doctor`, `execution gate
+blocked-by-design`, `simulated binding`. Exit 0 si los OK pasan;
+exit 1 si cualquiera falla. `make readiness` también disponible.
+
 ## OpenClaw v0.4 Safety Foundation
 
 A partir de `v0.4.0-dev` hay dos herramientas adicionales para

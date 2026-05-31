@@ -430,6 +430,34 @@ run_diagnostic() {
     fi
     echo
 
+    # 13b) Readiness smoke. openclaw-readiness.sh corre la cadena
+    # entera (policy + contracts + tools + negative-tests + doctor
+    # + gates en sandbox) y reporta ready_for_simulated_beta1.
+    # Guard de recursión: cuando readiness nos llama a nosotros,
+    # setea PATRICK_DOCTOR_SKIP_READINESS=1 y nosotros saltamos
+    # esta sección. Sin guard, doctor → readiness → doctor → ...
+    if [ -z "${PATRICK_DOCTOR_SKIP_READINESS:-}" ]; then
+        echo "--- readiness smoke ---"
+        rd_script="$script_dir/openclaw-readiness.sh"
+        if [ ! -x "$rd_script" ]; then
+            warn "openclaw-readiness.sh no presente o sin +x en $script_dir"
+        else
+            # readiness setea su propio guard al invocar doctor,
+            # así que su llamada anidada no entra acá de nuevo.
+            rd_out="$("$rd_script" 2>&1)"
+            rd_rc=$?
+            if [ "$rd_rc" -eq 0 ] \
+               && echo "$rd_out" | grep -q "^ready_for_simulated_beta1=yes$" \
+               && echo "$rd_out" | grep -q "^ready_for_real_execution=no$"; then
+                ok "readiness: ready_for_simulated_beta1=yes / real_execution=no"
+            else
+                fail "readiness (rc=$rd_rc)"
+                show_tail "$rd_out"
+            fi
+        fi
+        echo
+    fi
+
     # 13) Simulated execution binding smoke. Genera un plan
     # dedicado, prueba que simulate-execute SIN aprobar bloquea,
     # luego aprueba, luego simulate-execute con tool conocida →
