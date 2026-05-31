@@ -280,6 +280,18 @@ else
     warn "openclaw-simulate-tool.sh ausente: $sim_script"
 fi
 
+# 22) openclaw-readiness.sh presente y ejecutable (gate de Beta-1 readiness).
+rd_script="$scripts_dir/openclaw-readiness.sh"
+if [ -f "$rd_script" ]; then
+    if [ -x "$rd_script" ]; then
+        ok "openclaw-readiness.sh presente y ejecutable: $rd_script"
+    else
+        warn "openclaw-readiness.sh presente pero no ejecutable: $rd_script (chmod +x)"
+    fi
+else
+    warn "openclaw-readiness.sh ausente: $rd_script"
+fi
+
 echo
 echo "Resumen: WARN=$warn_count FAIL=$fail_count"
 exit "$fail_count"

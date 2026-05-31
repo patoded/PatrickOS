@@ -3,7 +3,7 @@
 
 PYTHON ?= python3
 
-.PHONY: watson install test lint iso clean help check pr merge fix-perms check-installed doctor doctor-repair negative-tests contracts-check safety-check
+.PHONY: watson install test lint iso clean help check pr merge fix-perms check-installed doctor doctor-repair negative-tests contracts-check safety-check readiness
 
 help:
 	@echo "Targets disponibles:"
@@ -18,6 +18,7 @@ help:
 	@echo "  make negative-tests - Suite de pruebas negativas de OpenClaw (gates deben bloquear)."
 	@echo "  make contracts-check - Valida configs/openclaw-tools.yaml (baseline + shape)."
 	@echo "  make safety-check  - Combo: check + policy + tools + contracts + negative-tests + doctor."
+	@echo "  make readiness     - Gate de Beta-1 readiness (ready_for_simulated_beta1=yes)."
 	@echo "  make pr        - Abre PR contra main. Uso: make pr TITLE=\"...\""
 	@echo "  make merge     - Mergea PR actual (squash) y vuelve a main. PR=N opcional."
 	@echo "  make fix-perms - chmod +x scripts/*.sh (rescate post-edición Windows/WSL)."
@@ -63,6 +64,9 @@ negative-tests:
 
 contracts-check:
 	bash scripts/openclaw-contracts.sh check
+
+readiness:
+	bash scripts/openclaw-readiness.sh
 
 # Combo de validación de seguridad para v0.4 / Beta-1 prep. Encadena
 # con && para que el primer FAIL aborte (no enmascaramos problemas

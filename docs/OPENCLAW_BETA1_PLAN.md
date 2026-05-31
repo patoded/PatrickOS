@@ -21,6 +21,18 @@ shape del contrato vive en código, el validador lo prueba en cada
 `make safety-check`, y cualquier intento de pasar una candidata a
 `enabled: true` rompe el policy gate antes de cualquier `claw run`.
 
+El **gate de readiness** (`scripts/openclaw-readiness.sh`,
+`watson readiness` / `watson beta1` / `watson claw readiness`,
+`make readiness`) cubre la evaluación explícita de avance: corre
+policy + contracts + tools + negative tests + doctor + execute
+gate + simulated binding en cadena, marca `[BLOCKED] real
+execution runtime not implemented` como invariante esperada, y
+reporta `ready_for_simulated_beta1=yes` mientras todos los OK
+pasen. Exit 1 si cualquier OK requerido falla; exit 0 cuando el
+estado terminal es "listo para simulación, no para ejecución
+real". El doctor smoke nuevo `--- readiness smoke ---` lo
+ejecuta y verifica ese estado terminal en cada `make doctor`.
+
 A esto se suma **simulated execution** (fase 7), también sin
 habilitar nada: `scripts/openclaw-simulate-tool.sh` y los comandos
 `watson tool simulate <name>` / `watson simtool <name>` ejercitan

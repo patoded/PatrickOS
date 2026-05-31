@@ -72,6 +72,7 @@ Uso:
   openclaw-stub.sh unkill
   openclaw-stub.sh policy [show|path|check]
   openclaw-stub.sh negative-tests [--verbose]
+  openclaw-stub.sh readiness [beta1] [--verbose]
 
 Modos permitidos: consulta, clase, video, desarrollo (default), ia, general
 Priority permitidas: low, normal (default), high
@@ -151,6 +152,16 @@ case "$cmd" in
             exit 1
         fi
         exec "$nt_script" "$@"
+        ;;
+    readiness)
+        # Delegar en openclaw-readiness.sh (mismo dir). Args extra
+        # (ej. 'beta1', '--verbose') se forwardean.
+        rd_script="$(dirname "$0")/openclaw-readiness.sh"
+        if [ ! -x "$rd_script" ]; then
+            echo "Error: openclaw-readiness.sh no presente en $(dirname "$0")." >&2
+            exit 1
+        fi
+        exec "$rd_script" "$@"
         ;;
     run)
         mode="desarrollo"
