@@ -39,8 +39,13 @@ escribe un **manifest inmutable** en
 gates, plan reference, snapshot del contrato y la sección
 `Result` que documenta literalmente que nada se ejecutó. Watson
 los lee con `ws executions / last-execution / show-execution`.
-Cumple parte de la fase 7 (simulated execution): cada intento
-queda con registro auditable + sidecar legible por humanos.
+A partir del PR de index, también appendea una línea TSV a
+`<workspace>/executions/index.tsv` con `timestamp / mode / tool
+/ manifest / plan / status`, para listado y búsqueda sin abrir
+los `.md` uno por uno (`ws execution-index / recent-executions /
+search-executions`). Cumple parte de la fase 7 (simulated
+execution): cada intento queda con registro auditable + sidecar
+legible por humanos + índice escaneable.
 
 A esto se suma **simulated execution** (fase 7), también sin
 habilitar nada: `scripts/openclaw-simulate-tool.sh` y los comandos

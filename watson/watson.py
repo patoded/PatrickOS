@@ -139,6 +139,9 @@ def mostrar_ayuda():
     print("  workspace executions <m>                lista manifests de simulate-execute")
     print("  workspace last-execution <m>            imprime el último manifest")
     print("  workspace show-execution <m> <f|latest> imprime un manifest (basename de executions/)")
+    print("  workspace execution-index <m>           imprime executions/index.tsv crudo")
+    print("  workspace recent-executions <m> [n]     últimos n manifests reformateados")
+    print("  workspace search-executions <m> <txt>   busca en index.tsv (case-insensitive)")
     print("  nota \"texto\" (n, note)     guarda nota rápida local")
     print("  notas (ns, notes)          lista las últimas 20 notas")
     print("  tarea \"texto\" (t, todo)    agrega tarea pendiente")
@@ -204,6 +207,8 @@ def mostrar_ayuda():
     print("  watson claw simulate-execute --mode desarrollo --tool read_file 20260530-…-plan.md")
     print("  watson ws executions desarrollo")
     print("  watson ws show-execution desarrollo latest")
+    print("  watson ws recent-executions desarrollo")
+    print("  watson ws search-executions desarrollo read_file")
     print("  watson readiness")
     print("  watson beta1 readiness")
 

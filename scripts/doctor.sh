@@ -518,6 +518,31 @@ run_diagnostic() {
             show_tail "$em_list_out"
             show_tail "$em_show_out"
         fi
+
+        # Sub-check del index: el simulate-execute aprobado debió
+        # appendear a executions/index.tsv. Validamos archivo + 3
+        # readers: execution-index (raw), recent-executions
+        # (reformat), search-executions read_file.
+        idx_file="$exec_dir/index.tsv"
+        idx_lines=0
+        [ -f "$idx_file" ] && idx_lines=$(wc -l < "$idx_file" | tr -d ' ')
+        idx_out="$(PATRICK_OS_HOME="$SANDBOX" "$ws_script" execution-index desarrollo 2>&1)"
+        idx_rc=$?
+        rec_out="$(PATRICK_OS_HOME="$SANDBOX" "$ws_script" recent-executions desarrollo 2>&1)"
+        rec_rc=$?
+        srch_out="$(PATRICK_OS_HOME="$SANDBOX" "$ws_script" search-executions desarrollo read_file 2>&1)"
+        srch_rc=$?
+        if [ "$idx_lines" -ge 1 ] \
+           && [ "$idx_rc" -eq 0 ] && echo "$idx_out" | grep -q "read_file" \
+           && [ "$rec_rc" -eq 0 ] && echo "$rec_out" | grep -q "read_file" \
+           && [ "$srch_rc" -eq 0 ] && echo "$srch_out" | grep -q "read_file"; then
+            ok "execution index ($idx_lines línea/s, ws execution-index + recent + search OK)"
+        else
+            fail "execution index (lines=$idx_lines idx_rc=$idx_rc rec_rc=$rec_rc srch_rc=$srch_rc)"
+            show_tail "$idx_out"
+            show_tail "$rec_out"
+            show_tail "$srch_out"
+        fi
     fi
     echo
 

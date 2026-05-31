@@ -114,6 +114,11 @@ futura y va en la sección siguiente.
   metadata, gates, plan reference, snapshot del contrato de la
   tool y sección `Result` que documenta literalmente la
   no-ejecución. Audita `simulate_execute_manifest_written`.
+- **Índice de manifests** (`<workspace>/executions/index.tsv`):
+  TSV append-only con `timestamp / mode / tool / manifest_filename
+  / plan_filename / status` por cada simulación, para listado y
+  búsqueda forense sin abrir cada `.md`
+  (`ws execution-index / recent-executions / search-executions`).
 - **Approval state.** Cada plan puede marcarse `approved` o
   `rejected` por separado. El sidecar es local y per-plan; no hay
   "aprobación global".

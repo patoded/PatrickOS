@@ -657,6 +657,23 @@ No sudo.
 EOF_MANIFEST
         audit_log "simulate_execute_manifest_written" "$mode" "ok" "manifest=$manifest_file tool=$tool"
 
+        # Índice TSV append-only de manifests:
+        # timestamp \t mode \t tool \t manifest_filename \t plan_filename \t status
+        # Sanitizamos campos con tr -d '\t\n\r' por defensa: el plan
+        # y el tool ya pasaron sus validaciones (mode allowed, tool
+        # regex, basename), pero el filename del plan podría haber
+        # sido raro en escenarios futuros.
+        manifest_basename="${ts_filename}-${tool}-manifest.md"
+        san() { printf '%s' "$1" | tr -d '\t\n\r'; }
+        printf '%s\t%s\t%s\t%s\t%s\t%s\n' \
+            "$(san "$ts_filename")" \
+            "$(san "$mode")" \
+            "$(san "$tool")" \
+            "$(san "$manifest_basename")" \
+            "$(san "$file")" \
+            "simulated-only" \
+            >> "$exec_dir/index.tsv"
+
         echo "OpenClaw Simulated Execution"
         echo "Plan: $plan_file"
         echo "Tool: $tool"

@@ -145,6 +145,20 @@ else
     else
         fail_msg "simulated execution manifest (no se generó manifest)"
     fi
+    # 7c) execution manifest index: el simulate-execute también
+    # debió appendear a executions/index.tsv. El recent-executions
+    # debe mostrar al menos la tool que ejecutamos (read_file).
+    idx_file="$sandbox_eg/workspaces/desarrollo/executions/index.tsv"
+    idx_lines=0
+    [ -f "$idx_file" ] && idx_lines=$(wc -l < "$idx_file" | tr -d ' ')
+    rec_out="$(PATRICK_OS_HOME="$sandbox_eg" "$script_dir/workspace.sh" recent-executions desarrollo 2>&1)"
+    rec_rc=$?
+    if [ "$idx_lines" -ge 1 ] && [ "$rec_rc" -eq 0 ] && echo "$rec_out" | grep -q "read_file"; then
+        ok "execution manifest index ($idx_lines línea/s)"
+    else
+        fail_msg "execution manifest index (lines=$idx_lines rec_rc=$rec_rc)"
+        vlog "$rec_out"
+    fi
 fi
 rm -rf "$sandbox_eg"
 

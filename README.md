@@ -394,6 +394,22 @@ watson ws show-execution desarrollo 20260530-…-read_file-manifest.md
 
 `show-execution` valida basename estricto; `/` o `..` → exit 1.
 
+Cada `simulate-execute` también appendea una línea TSV a
+`<workspace>/executions/index.tsv` (`timestamp \t mode \t tool \t
+manifest_filename \t plan_filename \t status`) para listado y
+búsqueda rápida sin abrir cada `.md`:
+
+```bash
+watson ws execution-index desarrollo            # index.tsv crudo
+watson ws recent-executions desarrollo          # últimos 5 (default)
+watson ws recent-executions desarrollo 10       # últimos N
+watson ws search-executions desarrollo read_file
+```
+
+Formato de salida de `recent-executions` / `search-executions`:
+`timestamp | tool | manifest | plan | status`. `grep -iF` contra
+la línea completa; sin red, sin herramientas externas.
+
 ## OpenClaw audit log
 
 Bitácora estructurada y append-only de eventos de OpenClaw (status,
