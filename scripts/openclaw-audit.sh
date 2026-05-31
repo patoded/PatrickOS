@@ -65,6 +65,7 @@ case "$cmd" in
                   simulate_execute_unknown_tool \
                   simulate_execute_blocked_kill_switch \
                   simulate_execute_blocked_policy \
+                  simulate_execute_manifest_written \
                   status policy; do
             n=$(grep -cF "| event=$ev |" "$AUDIT_FILE")
             echo "event=$ev count=$n"

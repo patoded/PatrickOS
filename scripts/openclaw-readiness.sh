@@ -134,6 +134,17 @@ else
         fail_msg "simulated binding (rc=$se_rc, esperado simulated-only)"
         vlog "$se_out"
     fi
+    # 7b) simulated execution manifest: el simulate-execute anterior
+    # debió crear <workspace>/executions/<ts>-<tool>-manifest.md.
+    mf_count=0
+    for mf in "$sandbox_eg/workspaces/desarrollo/executions/"*-manifest.md; do
+        [ -f "$mf" ] && mf_count=$((mf_count + 1))
+    done
+    if [ "$mf_count" -ge 1 ]; then
+        ok "simulated execution manifest ($mf_count manifest/s)"
+    else
+        fail_msg "simulated execution manifest (no se generó manifest)"
+    fi
 fi
 rm -rf "$sandbox_eg"
 

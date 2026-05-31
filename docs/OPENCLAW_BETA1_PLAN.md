@@ -33,6 +33,15 @@ estado terminal es "listo para simulación, no para ejecución
 real". El doctor smoke nuevo `--- readiness smoke ---` lo
 ejecuta y verifica ese estado terminal en cada `make doctor`.
 
+A partir del PR de manifests, cada `simulate-execute` aprobado
+escribe un **manifest inmutable** en
+`<workspace>/executions/<ts>-<tool>-manifest.md` con metadata,
+gates, plan reference, snapshot del contrato y la sección
+`Result` que documenta literalmente que nada se ejecutó. Watson
+los lee con `ws executions / last-execution / show-execution`.
+Cumple parte de la fase 7 (simulated execution): cada intento
+queda con registro auditable + sidecar legible por humanos.
+
 A esto se suma **simulated execution** (fase 7), también sin
 habilitar nada: `scripts/openclaw-simulate-tool.sh` y los comandos
 `watson tool simulate <name>` / `watson simtool <name>` ejercitan

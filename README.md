@@ -371,12 +371,28 @@ watson claw simexec --mode desarrollo --tool read_file <plan-basename>
 
 `simulate-execute` corre la cadena entera (kill switch, policy,
 plan exists, approval, tool registry) y termina en
-`Status: simulated-only`. 5 nuevos eventos auditados:
+`Status: simulated-only`. 6 eventos auditados:
 `simulate_execute_allowed`, `simulate_execute_missing_approval`,
 `simulate_execute_unknown_tool`,
 `simulate_execute_blocked_kill_switch`,
-`simulate_execute_blocked_policy`. **Sigue sin ejecutar el binario
-real.**
+`simulate_execute_blocked_policy`,
+`simulate_execute_manifest_written`. **Sigue sin ejecutar el
+binario real.**
+
+Cada binding exitoso deja un manifest inmutable en
+`<workspace>/executions/<YYYYMMDD-HHMMSS>-<tool>-manifest.md` con
+metadata, gates, plan reference, snapshot del contrato de la tool
+y la sección `Result` que documenta literalmente que nada se
+ejecutó. Visualización:
+
+```bash
+watson ws executions desarrollo         # lista manifests
+watson ws last-execution desarrollo     # imprime el último
+watson ws show-execution desarrollo latest
+watson ws show-execution desarrollo 20260530-…-read_file-manifest.md
+```
+
+`show-execution` valida basename estricto; `/` o `..` → exit 1.
 
 ## OpenClaw audit log
 

@@ -494,6 +494,30 @@ run_diagnostic() {
             show_tail "$se2_out"
             show_tail "$se3_out"
         fi
+
+        # Execution manifest smoke: el simulate-execute aprobado de
+        # arriba debió dejar un manifest en executions/. Verificamos
+        # presencia + ws executions lista al menos uno + ws
+        # show-execution latest imprime el cuerpo del manifest con
+        # 'No command executed.'.
+        exec_dir="$SANDBOX/workspaces/desarrollo/executions"
+        em_count=0
+        for m in "$exec_dir"/*-manifest.md; do
+            [ -f "$m" ] && em_count=$((em_count + 1))
+        done
+        em_list_out="$(PATRICK_OS_HOME="$SANDBOX" "$ws_script" executions desarrollo 2>&1)"
+        em_list_rc=$?
+        em_show_out="$(PATRICK_OS_HOME="$SANDBOX" "$ws_script" show-execution desarrollo latest 2>&1)"
+        em_show_rc=$?
+        if [ "$em_count" -ge 1 ] \
+           && [ "$em_list_rc" -eq 0 ] && echo "$em_list_out" | grep -q "manifest.md" \
+           && [ "$em_show_rc" -eq 0 ] && echo "$em_show_out" | grep -q "No command executed."; then
+            ok "execution manifest ($em_count manifest/s, ws executions y show-execution OK)"
+        else
+            fail "execution manifest (count=$em_count list_rc=$em_list_rc show_rc=$em_show_rc)"
+            show_tail "$em_list_out"
+            show_tail "$em_show_out"
+        fi
     fi
     echo
 

@@ -336,6 +336,45 @@ fi
 run_fail "20. simulate-execute --mode desarrollo '../secreto' → rechazado" \
     "$OC" simulate-execute --mode desarrollo --tool read_file "../secreto"
 
+# ---------------------------------------------------------------
+# 21) simulate-execute approved genera manifest en executions/
+# ---------------------------------------------------------------
+# Re-aprovamos el plan de tests 17-18 si existe, y verificamos que
+# el manifest correspondiente quedó escrito.
+if [ -n "${SE_BASENAME:-}" ]; then
+    "$OC" simulate-execute --mode desarrollo --tool read_file "$SE_BASENAME" > /dev/null 2>&1
+    exec_dir="$SANDBOX/workspaces/desarrollo/executions"
+    manifest_count=0
+    for m in "$exec_dir"/*-manifest.md; do
+        [ -f "$m" ] && manifest_count=$((manifest_count + 1))
+    done
+    if [ "$manifest_count" -ge 1 ]; then
+        ok "21. simulate-execute approved generó manifest ($manifest_count en $exec_dir)"
+    else
+        fail_msg "21. simulate-execute approved NO generó manifest (esperado en $exec_dir)"
+    fi
+else
+    fail_msg "21. (precondición rota) SE_BASENAME vacío de tests 17-19"
+fi
+
+# ---------------------------------------------------------------
+# 22) ws show-execution latest funciona y contiene Result Section
+# ---------------------------------------------------------------
+se_show_out="$("$WS" show-execution desarrollo latest 2>&1)"
+se_show_rc=$?
+if [ "$se_show_rc" -eq 0 ] && echo "$se_show_out" | grep -q "No command executed."; then
+    ok "22. ws show-execution latest imprime manifest con 'No command executed.'"
+else
+    fail_msg "22. ws show-execution latest falló (rc=$se_show_rc o sin 'No command executed.')"
+    echo "$se_show_out" | tail -n 4 | sed 's/^/        /'
+fi
+
+# ---------------------------------------------------------------
+# 23) ws show-execution con basename traversal → rechazado
+# ---------------------------------------------------------------
+run_fail "23. ws show-execution desarrollo '../bad' → rechazado" \
+    "$WS" show-execution desarrollo "../bad"
+
 echo
 echo "Resumen: OK=$ok_count FAIL=$fail_count"
 exit "$fail_count"

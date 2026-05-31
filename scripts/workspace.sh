@@ -39,6 +39,9 @@ Uso:
   workspace.sh approve-plan <modo> <filename>
   workspace.sh reject-plan <modo> <filename> [razón]
   workspace.sh plan-status <modo> <filename>
+  workspace.sh executions <modo>
+  workspace.sh last-execution <modo>
+  workspace.sh show-execution <modo> <archivo|latest>
 
 Modos permitidos: consulta, clase, video, desarrollo, ia, general
 EOF
@@ -392,6 +395,73 @@ case "$cmd" in
         else
             echo "status=pending"
         fi
+        ;;
+    executions)
+        mode="${1:-}"
+        require_mode "$mode"
+        exec_dir="$WORKSPACES_DIR/$mode/executions"
+        if [ ! -d "$exec_dir" ]; then
+            echo "Sin ejecuciones."
+            exit 0
+        fi
+        # Glob *-manifest.md; si no matchea, '[ -f ]' lo descarta.
+        found=0
+        for f in "$exec_dir"/*-manifest.md; do
+            [ -f "$f" ] || continue
+            found=1
+            echo "$f"
+        done
+        if [ "$found" -eq 0 ]; then
+            echo "Sin ejecuciones."
+        fi
+        ;;
+    last-execution)
+        mode="${1:-}"
+        require_mode "$mode"
+        exec_dir="$WORKSPACES_DIR/$mode/executions"
+        if [ ! -d "$exec_dir" ]; then
+            echo "Sin ejecuciones."
+            exit 0
+        fi
+        # El último por orden léxico = el más reciente (timestamp YYYYMMDD-HHMMSS).
+        last=""
+        for f in "$exec_dir"/*-manifest.md; do
+            [ -f "$f" ] && last="$f"
+        done
+        if [ -z "$last" ]; then
+            echo "Sin ejecuciones."
+            exit 0
+        fi
+        cat "$last"
+        ;;
+    show-execution)
+        mode="${1:-}"
+        require_mode "$mode"
+        shift || true
+        target="${1:-}"
+        if [ -z "$target" ]; then
+            echo "Error: falta archivo. Uso: workspace.sh show-execution <modo> <archivo|latest>" >&2
+            exit 1
+        fi
+        exec_dir="$WORKSPACES_DIR/$mode/executions"
+        if [ "$target" = "latest" ]; then
+            manifest=""
+            for f in "$exec_dir"/*-manifest.md; do
+                [ -f "$f" ] && manifest="$f"
+            done
+            if [ -z "$manifest" ]; then
+                echo "Error: no hay ejecuciones en $exec_dir." >&2
+                exit 1
+            fi
+        else
+            require_basename "$target"
+            manifest="$exec_dir/$target"
+        fi
+        if [ ! -f "$manifest" ]; then
+            echo "Error: manifest no encontrado: $manifest" >&2
+            exit 1
+        fi
+        cat "$manifest"
         ;;
     show-plan)
         mode="${1:-}"
