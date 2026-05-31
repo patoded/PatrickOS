@@ -136,6 +136,9 @@ def mostrar_ayuda():
     print("  workspace approve-plan <m> <file>       marca plan local como approved")
     print("  workspace reject-plan <m> <f> [razón]   marca plan local como rejected")
     print("  workspace plan-status <m> <file>        imprime estado del plan (pending si no hay sidecar)")
+    print("  workspace executions <m>                lista manifests de simulate-execute")
+    print("  workspace last-execution <m>            imprime el último manifest")
+    print("  workspace show-execution <m> <f|latest> imprime un manifest (basename de executions/)")
     print("  nota \"texto\" (n, note)     guarda nota rápida local")
     print("  notas (ns, notes)          lista las últimas 20 notas")
     print("  tarea \"texto\" (t, todo)    agrega tarea pendiente")
@@ -199,6 +202,8 @@ def mostrar_ayuda():
     print("  watson tool simulate read_file")
     print("  watson simtool git_status")
     print("  watson claw simulate-execute --mode desarrollo --tool read_file 20260530-…-plan.md")
+    print("  watson ws executions desarrollo")
+    print("  watson ws show-execution desarrollo latest")
     print("  watson readiness")
     print("  watson beta1 readiness")
 

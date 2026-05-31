@@ -236,9 +236,16 @@ watson claw simexec --mode <m> --tool <name> <plan-basename>
 7. Todo OK → `simulate_execute_allowed` + plan combinado
    `OpenClaw Simulated Execution / Plan: … / Tool: … /
    Status: simulated-only`. Exit 0.
+8. Manifest inmutable en `<workspace>/executions/<ts>-<tool>-manifest.md`
+   con metadata, gates, plan reference, snapshot del contrato de la
+   tool y sección `Result` (`No command executed.` /
+   `No filesystem mutation by tool.` / `No network call.` /
+   `No sudo.`). Audita `simulate_execute_manifest_written`.
 
 **No ejecuta el binario real.** Es el harness para probar el
-flujo completo de Beta-1 sin prender ninguna herramienta.
+flujo completo de Beta-1 sin prender ninguna herramienta. Watson
+lee los manifests con `ws executions / last-execution /
+show-execution` (basename estricto).
 
 El validador hace tres cosas:
 

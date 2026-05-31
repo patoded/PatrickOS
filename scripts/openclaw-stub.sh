@@ -557,12 +557,113 @@ EOF_PLAN
         # Binding válido. Audit + plan combinado. exit 0: el binding
         # se completó como se esperaba (estado terminal correcto).
         audit_log "simulate_execute_allowed" "$mode" "ok" "tool=$tool file=$file"
+
+        # Manifest de ejecución simulada: documenta plan + tool +
+        # gates en un archivo inmutable bajo
+        # <workspace>/executions/<ts>-<tool>-manifest.md. NO ejecuta
+        # nada — es solo registro auditable.
+        exec_dir="$ws_dir/executions"
+        mkdir -p "$exec_dir"
+        ts_filename="$(date '+%Y%m%d-%H%M%S')"
+        manifest_file="$exec_dir/${ts_filename}-${tool}-manifest.md"
+        fecha_manifest="$(date '+%Y-%m-%d %H:%M:%S')"
+
+        # Resolver el path del registry para snapshot del contrato.
+        # Mismo patrón que openclaw-policy/contracts/tools.sh.
+        TOOLS_YAML=""
+        if [ -n "${PATRICK_OS_TOOLS:-}" ] && [ -f "$PATRICK_OS_TOOLS" ]; then
+            TOOLS_YAML="$PATRICK_OS_TOOLS"
+        elif [ -f "$(dirname "$(dirname "$0")")/configs/openclaw-tools.yaml" ]; then
+            TOOLS_YAML="$(dirname "$(dirname "$0")")/configs/openclaw-tools.yaml"
+        elif [ -f "/usr/local/share/patrick-os/configs/openclaw-tools.yaml" ]; then
+            TOOLS_YAML="/usr/local/share/patrick-os/configs/openclaw-tools.yaml"
+        fi
+
+        # get_field <field> — extrae el valor de un campo del bloque
+        # de la tool. Sin parser YAML; busca '^    <field>:' dentro
+        # del bloque '^  - name: <tool>'. Devuelve "" si no encuentra.
+        get_field() {
+            local field="$1"
+            [ -z "$TOOLS_YAML" ] && { echo ""; return; }
+            awk -v needle="$tool" -v field="$field" '
+                /^  - name:[[:space:]]+/ {
+                    if (matched) exit
+                    name = $0; sub(/^  - name:[[:space:]]+/, "", name)
+                    if (name == needle) matched = 1
+                    next
+                }
+                matched {
+                    re = "^    " field ":"
+                    if ($0 ~ re) {
+                        line = $0
+                        sub("^    " field ":[[:space:]]*", "", line)
+                        print line
+                        exit
+                    }
+                }
+            ' "$TOOLS_YAML"
+        }
+        tool_desc="$(get_field "description")"
+        tool_modes="$(get_field "allowed_modes")"
+        tool_scope="$(get_field "filesystem_scope")"
+        tool_network="$(get_field "network")"
+        tool_sudo="$(get_field "sudo")"
+        tool_timeout="$(get_field "timeout_seconds")"
+        tool_confirm="$(get_field "requires_confirmation")"
+        tool_loglevel="$(get_field "log_level")"
+
+        cat > "$manifest_file" <<EOF_MANIFEST
+# OpenClaw Simulated Execution Manifest
+
+## Metadata
+Fecha: $fecha_manifest
+Modo: $mode
+Workspace: $ws_dir
+Plan: $plan_file
+Tool: $tool
+Status: simulated-only
+Execution: disabled
+Reason: Beta-1 preparation, no runtime real
+
+## Gates
+Policy: OK
+Kill switch: inactive
+Approval: approved
+Tool registry: present
+Tool enabled: false
+Contracts: OK
+
+## Plan reference
+Filename: $file
+State file: $state_file
+
+## Tool contract snapshot
+Tool contract: present, disabled, confirmation required
+name: $tool
+description: ${tool_desc:-?}
+allowed_modes: ${tool_modes:-?}
+filesystem_scope: ${tool_scope:-?}
+network: ${tool_network:-?}
+sudo: ${tool_sudo:-?}
+timeout_seconds: ${tool_timeout:-?}
+requires_confirmation: ${tool_confirm:-?}
+log_level: ${tool_loglevel:-?}
+
+## Result
+No command executed.
+No filesystem mutation by tool.
+No network call.
+No sudo.
+EOF_MANIFEST
+        audit_log "simulate_execute_manifest_written" "$mode" "ok" "manifest=$manifest_file tool=$tool"
+
         echo "OpenClaw Simulated Execution"
         echo "Plan: $plan_file"
         echo "Tool: $tool"
         echo "Status: simulated-only"
         echo "Execution: disabled"
         echo "Reason: Beta-1 preparation, no runtime real"
+        echo "Manifest: $manifest_file"
         exit 0
         ;;
     *)

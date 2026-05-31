@@ -148,10 +148,13 @@ registry tampered con `enabled: true` → contracts check FAIL)**,
 **14-16 (camino de simulación de tools: unknown, registry
 tampered, simulated-only)** y **17-20 (binding completo
 simulate-execute: missing approval, approved + tool conocida →
-simulated-only, tool desconocida, filename traversal)**. Tests
-13 y 15 cubren el item 10 (modificar policy/registry desde un
-actor); test 20 refuerza el item 5 (path traversal) sobre el
-binding. Los items restantes (sandbox, sudo, red, shell libre,
+simulated-only, tool desconocida, filename traversal)** y **21-23
+(execution manifest: el binding genera manifest, show-execution
+latest imprime "No command executed.", basename traversal en
+show-execution rechazado)**. Tests 13 y 15 cubren el item 10
+(modificar policy/registry desde un actor); test 20 y 23
+refuerzan el item 5 (path traversal) sobre el binding y el viewer
+de manifests. Los items restantes (sandbox, sudo, red, shell libre,
 plugin externo) siguen documentados — quedan para Beta-1 cuando
 el sandbox de proceso esté en código.
 

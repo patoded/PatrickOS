@@ -104,9 +104,16 @@ futura y va en la sección siguiente.
   antes de tocar el FS.
 - **Audit log estructurado** (`openclaw/audit.log`). Una línea por
   evento, formato `timestamp | event=… | mode=… | result=… |
-  detail=…`. 13 eventos en el catálogo
+  detail=…`. Catálogo amplio
   (`openclaw-audit.sh summary`), incluyendo los 4 del execution
-  gate. Append-only; ningún comando borra entradas.
+  gate y los 6 del simulate-execute binding. Append-only; ningún
+  comando borra entradas.
+- **Manifests de simulated execution**
+  (`<workspace>/executions/<ts>-<tool>-manifest.md`). Cada
+  `simulate-execute` aprobado escribe un manifest inmutable con
+  metadata, gates, plan reference, snapshot del contrato de la
+  tool y sección `Result` que documenta literalmente la
+  no-ejecución. Audita `simulate_execute_manifest_written`.
 - **Approval state.** Cada plan puede marcarse `approved` o
   `rejected` por separado. El sidecar es local y per-plan; no hay
   "aprobación global".
